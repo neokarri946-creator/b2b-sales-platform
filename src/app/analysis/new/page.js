@@ -157,7 +157,7 @@ export default function NewAnalysis() {
         )}
 
         <div className="bg-white rounded-lg shadow p-8">
-          <h2 className="text-2xl font-semibold mb-6">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-6">
             Analyze a B2B Sales Opportunity
           </h2>
           

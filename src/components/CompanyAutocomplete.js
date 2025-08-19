@@ -114,7 +114,7 @@ export default function CompanyAutocomplete({
   return (
     <div className="relative" ref={dropdownRef}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-900 mb-1">
           {label} {required && <span className="text-red-500">*</span>}
         </label>
       )}
@@ -171,7 +171,7 @@ export default function CompanyAutocomplete({
                     </span>
                   )}
                 </div>
-                <div className="text-sm text-gray-600 mt-1">
+                <div className="text-sm text-gray-900 mt-1">
                   {validatedCompany.description || validatedCompany.industry || 'Click to confirm this company'}
                 </div>
               </div>
@@ -195,25 +195,25 @@ export default function CompanyAutocomplete({
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
               {validatedCompany.marketCap && validatedCompany.marketCap !== 'N/A' && (
                 <div>
-                  <span className="text-gray-500">Market Cap:</span>
+                  <span className="text-gray-900">Market Cap:</span>
                   <span className="ml-1 font-medium text-gray-900">{validatedCompany.marketCap}</span>
                 </div>
               )}
               {validatedCompany.revenue && validatedCompany.revenue !== 'N/A' && (
                 <div>
-                  <span className="text-gray-500">Revenue:</span>
+                  <span className="text-gray-900">Revenue:</span>
                   <span className="ml-1 font-medium text-gray-900">{validatedCompany.revenue}</span>
                 </div>
               )}
               {validatedCompany.employees && validatedCompany.employees !== 'N/A' && (
                 <div>
-                  <span className="text-gray-500">Employees:</span>
+                  <span className="text-gray-900">Employees:</span>
                   <span className="ml-1 font-medium text-gray-900">{formatNumber(validatedCompany.employees)}</span>
                 </div>
               )}
               {validatedCompany.sector && (
                 <div>
-                  <span className="text-gray-500">Sector:</span>
+                  <span className="text-gray-900">Sector:</span>
                   <span className="ml-1 font-medium text-gray-900">{validatedCompany.sector}</span>
                 </div>
               )}
@@ -221,7 +221,7 @@ export default function CompanyAutocomplete({
 
             {/* Additional info if available */}
             {validatedCompany.fiftyTwoWeekRange && validatedCompany.fiftyTwoWeekRange !== 'N/A' && (
-              <div className="mt-2 text-xs text-gray-500">
+              <div className="mt-2 text-xs text-gray-900">
                 52-Week Range: {validatedCompany.fiftyTwoWeekRange}
               </div>
             )}
@@ -238,7 +238,7 @@ export default function CompanyAutocomplete({
         <p className={`mt-1 text-xs ${
           validationMessage.includes('✓') ? 'text-green-600' : 
           validationMessage.includes('not found') ? 'text-amber-600' : 
-          'text-gray-500'
+          'text-gray-900'
         }`}>
           {validationMessage}
         </p>
