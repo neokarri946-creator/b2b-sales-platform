@@ -161,7 +161,7 @@ export default function HomePage() {
               Ready for Your Next Analysis?
             </h2>
             <p className="text-xl text-blue-100 mb-8">
-              You're on the Free plan • 1 analysis per month
+              You&apos;re on the Free plan • 1 analysis per month
             </p>
             <div className="flex justify-center gap-4">
               <button
