@@ -31,18 +31,24 @@ const ANALYSIS_FRAMEWORK = {
 }
 
 // Helper function to gather company intelligence
-async function gatherCompanyIntelligence(companyName) {
+async function gatherCompanyIntelligence(companyName, request) {
   try {
     // Try to get stock market data first
-    const response = await fetch(`${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/api/validate-company`, {
+    const baseUrl = request?.headers?.get('host') || 'b2b-sales-platform.vercel.app'
+    const protocol = request?.headers?.get('x-forwarded-proto') || 'https'
+    const apiUrl = `${protocol}://${baseUrl}/api/validate-company`
+    
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query: companyName })
     })
     
-    const data = await response.json()
-    if (data.found && data.company) {
-      return data.company
+    if (response.ok) {
+      const data = await response.json()
+      if (data.found && data.company) {
+        return data.company
+      }
     }
   } catch (error) {
     console.log('Company validation failed:', error)
@@ -149,12 +155,12 @@ async function performAIAnalysis(prompt) {
         return JSON.parse(jsonMatch[0])
       }
     } catch (error) {
-      console.error('Claude analysis failed:', error)
+      console.error('Claude analysis failed:', error.message)
     }
   }
   
   // Fallback to GPT-4 if available
-  if (openai && process.env.OPENAI_API_KEY !== 'sk-placeholder') {
+  if (openai && process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'sk-placeholder') {
     try {
       console.log('Using GPT-4 for analysis...')
       const completion = await openai.chat.completions.create({
@@ -176,10 +182,11 @@ async function performAIAnalysis(prompt) {
       
       return JSON.parse(completion.choices[0]?.message?.content || '{}')
     } catch (error) {
-      console.error('GPT-4 analysis failed:', error)
+      console.error('GPT-4 analysis failed:', error.message)
     }
   }
   
+  console.log('No AI models available, will use framework-based analysis')
   return null
 }
 
@@ -357,8 +364,8 @@ export async function POST(request) {
     // Gather intelligence about both companies
     console.log('Gathering company intelligence...')
     const [sellerInfo, targetInfo] = await Promise.all([
-      gatherCompanyIntelligence(seller),
-      gatherCompanyIntelligence(target)
+      gatherCompanyIntelligence(seller, request),
+      gatherCompanyIntelligence(target, request)
     ])
 
     // Generate analysis prompt
