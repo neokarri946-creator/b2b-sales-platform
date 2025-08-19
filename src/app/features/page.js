@@ -147,7 +147,7 @@ export default function FeaturesPage() {
                   {feature.details.slice(0, 3).map((detail, idx) => (
                     <li key={idx} className="flex items-start">
                       <span className="text-green-500 mr-2">✓</span>
-                      <span className="text-sm text-gray-700">{detail}</span>
+                      <span className="text-sm text-gray-900">{detail}</span>
                     </li>
                   ))}
                 </ul>
@@ -283,7 +283,7 @@ export default function FeaturesPage() {
               <tbody className="divide-y divide-gray-200">
                 {comparisonData.map((row, idx) => (
                   <tr key={idx} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-gray-700">{row.feature}</td>
+                    <td className="px-6 py-4 text-gray-900">{row.feature}</td>
                     <td className="px-6 py-4 text-center">
                       {row.us ? (
                         <span className="text-green-500 text-xl">✓</span>
@@ -324,7 +324,7 @@ export default function FeaturesPage() {
               <p className="text-gray-900 mb-4">
                 Identify and qualify enterprise opportunities without a large sales team
               </p>
-              <ul className="space-y-2 text-sm text-gray-700">
+              <ul className="space-y-2 text-sm text-gray-900">
                 <li>• Quick market validation</li>
                 <li>• Competitive positioning</li>
                 <li>• Email templates that convert</li>
@@ -336,7 +336,7 @@ export default function FeaturesPage() {
               <p className="text-gray-900 mb-4">
                 Scale your sales process with data-driven insights and automation
               </p>
-              <ul className="space-y-2 text-sm text-gray-700">
+              <ul className="space-y-2 text-sm text-gray-900">
                 <li>• Deal prioritization</li>
                 <li>• Financial projections</li>
                 <li>• Risk assessment</li>
@@ -348,7 +348,7 @@ export default function FeaturesPage() {
               <p className="text-gray-900 mb-4">
                 Enhance your sales intelligence with AI-powered strategic analysis
               </p>
-              <ul className="space-y-2 text-sm text-gray-700">
+              <ul className="space-y-2 text-sm text-gray-900">
                 <li>• Strategic opportunities</li>
                 <li>• Comprehensive scoring</li>
                 <li>• Executive reporting</li>

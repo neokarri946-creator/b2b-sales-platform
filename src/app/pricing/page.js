@@ -135,7 +135,7 @@ export default function Pricing() {
                   {plan.features.map((feature, i) => (
                     <li key={i} className="flex items-start">
                       <span className="text-green-500 mr-2">✓</span>
-                      <span className="text-gray-700">{feature}</span>
+                      <span className="text-gray-900">{feature}</span>
                     </li>
                   ))}
                 </ul>
