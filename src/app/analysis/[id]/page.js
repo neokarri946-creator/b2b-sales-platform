@@ -11,6 +11,7 @@ export default function AnalysisResults() {
   const [analysis, setAnalysis] = useState(null)
   const [loading, setLoading] = useState(true)
   const [copiedEmail, setCopiedEmail] = useState(null)
+  const [showExportMenu, setShowExportMenu] = useState(false)
 
   useEffect(() => {
     console.log('Looking for analysis with ID:', params.id)
@@ -44,12 +45,140 @@ export default function AnalysisResults() {
     }
   }, [params.id])
 
+  // Close export menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showExportMenu && !event.target.closest('.relative')) {
+        setShowExportMenu(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showExportMenu])
+
   const copyEmail = (index) => {
     const template = analysis.email_templates[index]
     const text = `Subject: ${template.subject || template.to}\n\n${template.body}`
     navigator.clipboard.writeText(text)
     setCopiedEmail(index)
     setTimeout(() => setCopiedEmail(null), 2000)
+  }
+
+  const generateTextReport = () => {
+    let report = `B2B SALES ANALYSIS REPORT\n`
+    report += `${'='.repeat(50)}\n\n`
+    report += `Company Analysis: ${analysis.seller_company} → ${analysis.target_company}\n`
+    report += `Generated: ${new Date(analysis.timestamp).toLocaleDateString()}\n`
+    report += `Methodology: ${analysis.analysis_methodology}\n\n`
+
+    // Overall Score
+    report += `OVERALL SUCCESS PROBABILITY: ${analysis.success_probability}%\n\n`
+
+    // Scorecard
+    if (analysis.scorecard) {
+      report += `SOLUTION AFFINITY SCORECARD\n`
+      report += `${'-'.repeat(30)}\n`
+      analysis.scorecard.dimensions?.forEach(dim => {
+        report += `${dim.name}: ${dim.score}/10 (Weight: ${(dim.weight * 100).toFixed(0)}%)\n`
+        report += `  Rationale: ${dim.rationale}\n\n`
+      })
+    }
+
+    // Strategic Opportunities
+    if (analysis.strategic_opportunities) {
+      report += `STRATEGIC OPPORTUNITIES\n`
+      report += `${'-'.repeat(20)}\n`
+      analysis.strategic_opportunities.forEach((opp, i) => {
+        report += `${i + 1}. ${opp.use_case} (${opp.value_magnitude} VALUE)\n`
+        report += `   Impact: ${opp.business_impact}\n`
+        report += `   Implementation: ${opp.implementation_effort}\n\n`
+      })
+    }
+
+    // Financial Analysis
+    if (analysis.financial_analysis) {
+      report += `FINANCIAL ANALYSIS\n`
+      report += `${'-'.repeat(17)}\n`
+      report += `Deal Size Range: ${analysis.financial_analysis.deal_size_range}\n`
+      report += `ROI Projection: ${analysis.financial_analysis.roi_projection}\n`
+      report += `Payback Period: ${analysis.financial_analysis.payback_period}\n`
+      report += `Budget Source: ${analysis.financial_analysis.budget_source}\n\n`
+    }
+
+    // Score Reasoning
+    if (analysis.score_reasoning) {
+      report += `SCORE REASONING & METHODOLOGY\n`
+      report += `${'-'.repeat(32)}\n`
+      report += `${analysis.score_reasoning.document_title}\n\n`
+      report += `Methodology: ${analysis.score_reasoning.methodology}\n\n`
+      
+      if (analysis.score_reasoning.dimension_analysis) {
+        analysis.score_reasoning.dimension_analysis.forEach(dim => {
+          report += `${dim.dimension.toUpperCase()} (${dim.score}/10)\n`
+          report += `Reasoning: ${dim.reasoning}\n`
+          report += `Supporting Data: ${dim.supporting_data}\n`
+          if (dim.sources) {
+            report += `Sources:\n`
+            dim.sources.forEach(source => {
+              report += `  - ${source.title}: ${source.url}\n`
+            })
+          }
+          report += `\n`
+        })
+      }
+    }
+
+    // Challenges
+    if (analysis.challenges) {
+      report += `KEY CHALLENGES\n`
+      report += `${'-'.repeat(14)}\n`
+      analysis.challenges.forEach((challenge, i) => {
+        report += `${i + 1}. ${challenge}\n`
+      })
+      report += `\n`
+    }
+
+    // Email Templates
+    if (analysis.email_templates) {
+      report += `EMAIL TEMPLATES\n`
+      report += `${'-'.repeat(14)}\n`
+      analysis.email_templates.forEach((template, i) => {
+        report += `Template ${i + 1}: ${template.to}\n`
+        report += `Subject: ${template.subject}\n`
+        report += `Body:\n${template.body}\n\n`
+      })
+    }
+
+    return report
+  }
+
+  const downloadFile = (content, filename, type) => {
+    const blob = new Blob([content], { type })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  const exportAsText = () => {
+    const report = generateTextReport()
+    const filename = `analysis-${analysis.seller_company}-${analysis.target_company}-${new Date().toISOString().split('T')[0]}.txt`
+    downloadFile(report, filename, 'text/plain')
+    setShowExportMenu(false)
+  }
+
+  const exportAsJSON = () => {
+    const jsonData = JSON.stringify(analysis, null, 2)
+    const filename = `analysis-${analysis.seller_company}-${analysis.target_company}-${new Date().toISOString().split('T')[0]}.json`
+    downloadFile(jsonData, filename, 'application/json')
+    setShowExportMenu(false)
   }
 
   if (loading) {
@@ -421,6 +550,65 @@ export default function AnalysisResults() {
           >
             Back to Home
           </button>
+        </div>
+
+        {/* Export Button - Bottom Left */}
+        <div className="relative mt-8">
+          <button
+            onClick={() => setShowExportMenu(!showExportMenu)}
+            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 shadow-lg"
+          >
+            <svg 
+              width="16" 
+              height="16" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7,10 12,15 17,10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Export Report
+          </button>
+          
+          {/* Export Menu */}
+          {showExportMenu && (
+            <div className="absolute bottom-full left-0 mb-2 w-48 bg-white rounded-lg shadow-lg border z-10">
+              <div className="py-2">
+                <button
+                  onClick={exportAsText}
+                  className="w-full text-left px-4 py-2 text-gray-900 hover:bg-gray-100 flex items-center gap-2"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14,2 14,8 20,8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10,9 9,9 8,9"/>
+                  </svg>
+                  Export as Text (.txt)
+                </button>
+                <button
+                  onClick={exportAsJSON}
+                  className="w-full text-left px-4 py-2 text-gray-900 hover:bg-gray-100 flex items-center gap-2"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14,2 14,8 20,8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <line x1="12" y1="18" x2="12" y2="12"/>
+                    <line x1="9" y1="15" x2="15" y2="15"/>
+                  </svg>
+                  Export as JSON (.json)
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
