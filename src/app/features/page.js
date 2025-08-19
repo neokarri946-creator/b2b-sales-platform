@@ -130,7 +130,7 @@ export default function FeaturesPage() {
 
         {/* Core Features Grid */}
         <div className="mb-20">
-          <h2 className="text-3xl font-bold text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
             Comprehensive Analysis Framework
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -141,7 +141,7 @@ export default function FeaturesPage() {
                 onClick={() => setSelectedFeature(index)}
               >
                 <div className="text-4xl mb-4">{feature.icon}</div>
-                <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">{feature.title}</h3>
                 <p className="text-gray-900 mb-4">{feature.description}</p>
                 <ul className="space-y-2">
                   {feature.details.slice(0, 3).map((detail, idx) => (
@@ -161,7 +161,7 @@ export default function FeaturesPage() {
 
         {/* How It Works */}
         <div className="bg-white rounded-2xl shadow-xl p-12 mb-20">
-          <h2 className="text-3xl font-bold text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
             How Our AI Analysis Works
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -169,7 +169,7 @@ export default function FeaturesPage() {
               <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold text-blue-600">1</span>
               </div>
-              <h3 className="font-semibold mb-2">Input Companies</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">Input Companies</h3>
               <p className="text-sm text-gray-900">
                 Enter seller and target companies with auto-validation
               </p>
@@ -178,7 +178,7 @@ export default function FeaturesPage() {
               <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold text-blue-600">2</span>
               </div>
-              <h3 className="font-semibold mb-2">Market Validation</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">Market Validation</h3>
               <p className="text-sm text-gray-900">
                 Real-time verification via Yahoo Finance APIs
               </p>
@@ -187,7 +187,7 @@ export default function FeaturesPage() {
               <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold text-blue-600">3</span>
               </div>
-              <h3 className="font-semibold mb-2">AI Analysis</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">AI Analysis</h3>
               <p className="text-sm text-gray-900">
                 GPT-4 + proprietary B2B framework processing
               </p>
@@ -196,7 +196,7 @@ export default function FeaturesPage() {
               <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold text-blue-600">4</span>
               </div>
-              <h3 className="font-semibold mb-2">Actionable Report</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">Actionable Report</h3>
               <p className="text-sm text-gray-900">
                 Comprehensive analysis with scoring and templates
               </p>
@@ -206,13 +206,13 @@ export default function FeaturesPage() {
 
         {/* Solution Affinity Scorecard Detail */}
         <div className="mb-20">
-          <h2 className="text-3xl font-bold text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
             Solution Affinity Scorecard™
           </h2>
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl p-8 text-white">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
-                <h3 className="text-2xl font-semibold mb-4">
+                <h3 className="text-2xl font-semibold text-gray-900 mb-4">
                   5-Dimensional Analysis Framework
                 </h3>
                 <p className="mb-6">
@@ -244,7 +244,7 @@ export default function FeaturesPage() {
               </div>
               <div className="flex items-center justify-center">
                 <div className="text-center">
-                  <div className="text-6xl font-bold mb-4">76%</div>
+                  <div className="text-6xl font-bold text-gray-900 mb-4">76%</div>
                   <div className="text-2xl mb-2">Overall Score</div>
                   <div className="text-lg opacity-90">High Probability Deal</div>
                   <button
@@ -261,14 +261,14 @@ export default function FeaturesPage() {
 
         {/* Comparison Table */}
         <div className="mb-20">
-          <h2 className="text-3xl font-bold text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
             Why Choose Our AI Analyzer?
           </h2>
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-4 text-left font-semibold">Feature</th>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-900">Feature</th>
                   <th className="px-6 py-4 text-center font-semibold text-blue-600">
                     Our AI Platform
                   </th>
@@ -314,13 +314,13 @@ export default function FeaturesPage() {
 
         {/* Use Cases */}
         <div className="mb-20">
-          <h2 className="text-3xl font-bold text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
             Perfect For Every Sales Team
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="bg-white p-8 rounded-xl shadow-lg">
               <div className="text-3xl mb-4">🚀</div>
-              <h3 className="text-xl font-semibold mb-3">Startups</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Startups</h3>
               <p className="text-gray-900 mb-4">
                 Identify and qualify enterprise opportunities without a large sales team
               </p>
@@ -332,7 +332,7 @@ export default function FeaturesPage() {
             </div>
             <div className="bg-white p-8 rounded-xl shadow-lg">
               <div className="text-3xl mb-4">📈</div>
-              <h3 className="text-xl font-semibold mb-3">Scale-ups</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Scale-ups</h3>
               <p className="text-gray-900 mb-4">
                 Scale your sales process with data-driven insights and automation
               </p>
@@ -344,7 +344,7 @@ export default function FeaturesPage() {
             </div>
             <div className="bg-white p-8 rounded-xl shadow-lg">
               <div className="text-3xl mb-4">🏢</div>
-              <h3 className="text-xl font-semibold mb-3">Enterprises</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Enterprises</h3>
               <p className="text-gray-900 mb-4">
                 Enhance your sales intelligence with AI-powered strategic analysis
               </p>
@@ -359,19 +359,19 @@ export default function FeaturesPage() {
 
         {/* Technical Details */}
         <div className="bg-gray-50 rounded-2xl p-12 mb-20">
-          <h2 className="text-3xl font-bold text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
             Powered by Advanced Technology
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
             <div>
-              <h3 className="text-xl font-semibold mb-4">AI Models</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">AI Models</h3>
               <div className="space-y-3">
                 <div className="flex items-center">
                   <div className="bg-blue-100 p-2 rounded-lg mr-3">
                     <span className="text-blue-600">🤖</span>
                   </div>
                   <div>
-                    <div className="font-semibold">GPT-4 & GPT-3.5 Turbo</div>
+                    <div className="font-semibold text-gray-900">GPT-4 & GPT-3.5 Turbo</div>
                     <div className="text-sm text-gray-900">Advanced language understanding</div>
                   </div>
                 </div>
@@ -380,7 +380,7 @@ export default function FeaturesPage() {
                     <span className="text-green-600">📊</span>
                   </div>
                   <div>
-                    <div className="font-semibold">Proprietary Scoring Algorithm</div>
+                    <div className="font-semibold text-gray-900">Proprietary Scoring Algorithm</div>
                     <div className="text-sm text-gray-900">B2B-specific success patterns</div>
                   </div>
                 </div>
@@ -389,21 +389,21 @@ export default function FeaturesPage() {
                     <span className="text-purple-600">🔍</span>
                   </div>
                   <div>
-                    <div className="font-semibold">Quality Assessment Engine</div>
+                    <div className="font-semibold text-gray-900">Quality Assessment Engine</div>
                     <div className="text-sm text-gray-900">0-100% accuracy scoring</div>
                   </div>
                 </div>
               </div>
             </div>
             <div>
-              <h3 className="text-xl font-semibold mb-4">Data Sources</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Data Sources</h3>
               <div className="space-y-3">
                 <div className="flex items-center">
                   <div className="bg-yellow-100 p-2 rounded-lg mr-3">
                     <span className="text-yellow-600">📈</span>
                   </div>
                   <div>
-                    <div className="font-semibold">Yahoo Finance API</div>
+                    <div className="font-semibold text-gray-900">Yahoo Finance API</div>
                     <div className="text-sm text-gray-900">Real-time market data</div>
                   </div>
                 </div>
@@ -412,7 +412,7 @@ export default function FeaturesPage() {
                     <span className="text-red-600">🌐</span>
                   </div>
                   <div>
-                    <div className="font-semibold">Web Intelligence</div>
+                    <div className="font-semibold text-gray-900">Web Intelligence</div>
                     <div className="text-sm text-gray-900">Private company research</div>
                   </div>
                 </div>
@@ -421,7 +421,7 @@ export default function FeaturesPage() {
                     <span className="text-indigo-600">💾</span>
                   </div>
                   <div>
-                    <div className="font-semibold">Historical Analysis</div>
+                    <div className="font-semibold text-gray-900">Historical Analysis</div>
                     <div className="text-sm text-gray-900">Pattern recognition database</div>
                   </div>
                 </div>
