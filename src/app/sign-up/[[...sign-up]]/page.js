@@ -6,7 +6,7 @@ export default function SignUpPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Your Account</h1>
-          <p className="text-gray-600">Start analyzing B2B opportunities in seconds</p>
+          <p className="text-gray-900">Start analyzing B2B opportunities in seconds</p>
         </div>
         <SignUp 
           appearance={{
@@ -35,7 +35,7 @@ export default function SignUpPage() {
           redirectUrl="/onboarding"
         />
         <div className="text-center mt-6">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-900">
             By signing up, you agree to our{' '}
             <a href="#" className="text-blue-600 hover:underline">Terms</a> and{' '}
             <a href="#" className="text-blue-600 hover:underline">Privacy Policy</a>

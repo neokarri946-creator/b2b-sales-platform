@@ -7,7 +7,7 @@ export default function SignInPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-          <p className="text-gray-600">Sign in to continue your B2B analysis</p>
+          <p className="text-gray-900">Sign in to continue your B2B analysis</p>
         </div>
         <SignIn 
           appearance={{
@@ -40,7 +40,7 @@ export default function SignInPage() {
           redirectUrl="/"
         />
         <div className="text-center mt-6">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-900">
             Don&apos;t have an account?{' '}
             <Link href="/sign-up" className="text-blue-600 hover:underline font-semibold">
               Sign up for free

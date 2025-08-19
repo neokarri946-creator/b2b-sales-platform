@@ -36,7 +36,7 @@ export default function Pricing() {
         'Buying signal alerts',
         'Email support'
       ],
-      cta: 'Start Trial',
+      cta: 'Get Started',
       priceId: 'price_starter',
       popular: true
     },
@@ -52,7 +52,7 @@ export default function Pricing() {
         'Priority support',
         'Custom integrations'
       ],
-      cta: 'Start Trial',
+      cta: 'Get Started',
       priceId: 'price_growth'
     }
   ]
@@ -102,8 +102,8 @@ export default function Pricing() {
           <h1 className="text-4xl font-bold text-gray-900 text-center">
             Choose Your Plan
           </h1>
-          <p className="text-center text-gray-600 mt-3 text-lg">
-            Start free, upgrade anytime. No credit card required.
+          <p className="text-center text-gray-900 mt-3 text-lg">
+            Choose the perfect plan for your sales team
           </p>
         </div>
       </div>
@@ -128,7 +128,7 @@ export default function Pricing() {
                 <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
                 <div className="mb-6">
                   <span className="text-4xl font-bold">{plan.price}</span>
-                  <span className="text-gray-600">{plan.period}</span>
+                  <span className="text-gray-900">{plan.period}</span>
                 </div>
                 
                 <ul className="space-y-3 mb-8">
@@ -165,22 +165,22 @@ export default function Pricing() {
           <div className="max-w-3xl mx-auto space-y-6">
             <div className="bg-white rounded-lg p-6">
               <h3 className="font-semibold mb-2">Can I cancel anytime?</h3>
-              <p className="text-gray-600">
-                Yes! Cancel anytime from your dashboard. No questions asked.
+              <p className="text-gray-900">
+                You can upgrade, downgrade, or cancel your subscription at any time.
               </p>
             </div>
             
             <div className="bg-white rounded-lg p-6">
-              <h3 className="font-semibold mb-2">What happens after my trial?</h3>
-              <p className="text-gray-600">
-                You&apos;ll be charged monthly. Cancel before trial ends to avoid charges.
+              <h3 className="font-semibold mb-2">Is there really a free plan?</h3>
+              <p className="text-gray-900">
+                Yes! You get 1 free analysis every month with our free plan.
               </p>
             </div>
             
             <div className="bg-white rounded-lg p-6">
-              <h3 className="font-semibold mb-2">Do you offer refunds?</h3>
-              <p className="text-gray-600">
-                Yes, we offer a 30-day money-back guarantee on all paid plans.
+              <h3 className="font-semibold mb-2">What payment methods do you accept?</h3>
+              <p className="text-gray-900">
+                We accept all major credit cards through Stripe.
               </p>
             </div>
           </div>

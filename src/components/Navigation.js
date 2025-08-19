@@ -65,7 +65,7 @@ export default function Navigation() {
               </button>
               <div className="flex items-center space-x-2">
                 {user && (
-                  <span className="text-sm text-gray-600">
+                  <span className="text-sm text-gray-900">
                     Hi, {user.firstName || 'there'}!
                   </span>
                 )}

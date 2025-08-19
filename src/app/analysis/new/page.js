@@ -112,7 +112,7 @@ export default function NewAnalysis() {
             </h1>
             <button
               onClick={() => router.push('/')}
-              className="text-gray-600 hover:text-gray-900"
+              className="text-gray-900 hover:text-gray-900"
             >
               ← Back to Home
             </button>
@@ -170,7 +170,7 @@ export default function NewAnalysis() {
                 label="Your Company (Seller)"
                 required={true}
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-900 mt-1">
                 The company offering products/services
               </p>
             </div>
@@ -183,7 +183,7 @@ export default function NewAnalysis() {
                 label="Target Company (Buyer)"
                 required={true}
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-900 mt-1">
                 The company you want to sell to
               </p>
             </div>

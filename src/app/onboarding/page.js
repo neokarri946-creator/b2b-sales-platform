@@ -75,7 +75,7 @@ export default function OnboardingPage() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Welcome to SalesAI! 👋
             </h1>
-            <p className="text-gray-600">
+            <p className="text-gray-900">
               Let&apos;s personalize your experience
             </p>
           </div>
@@ -94,7 +94,7 @@ export default function OnboardingPage() {
                 required
                 autoFocus
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-900 mt-1">
                 This is how we&apos;ll greet you in the app
               </p>
             </div>
@@ -124,7 +124,7 @@ export default function OnboardingPage() {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-900">
               You can update this anytime in your profile settings
             </p>
           </div>

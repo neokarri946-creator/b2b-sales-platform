@@ -107,7 +107,7 @@ export default function FeaturesPage() {
           <h1 className="text-5xl font-bold text-gray-900 mb-6">
             AI-Powered B2B Sales Intelligence
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+          <p className="text-xl text-gray-900 max-w-3xl mx-auto mb-8">
             Combining advanced AI with proven B2B methodology to deliver 
             comprehensive sales analysis that actually drives results
           </p>
@@ -127,25 +127,6 @@ export default function FeaturesPage() {
           </div>
         </div>
 
-        {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-20">
-          <div className="bg-white p-6 rounded-xl shadow-lg text-center">
-            <div className="text-3xl font-bold text-blue-600 mb-2">85%</div>
-            <div className="text-gray-600">Accuracy Rate</div>
-          </div>
-          <div className="bg-white p-6 rounded-xl shadow-lg text-center">
-            <div className="text-3xl font-bold text-green-600 mb-2">2.5x</div>
-            <div className="text-gray-600">Faster Analysis</div>
-          </div>
-          <div className="bg-white p-6 rounded-xl shadow-lg text-center">
-            <div className="text-3xl font-bold text-purple-600 mb-2">$2.3B</div>
-            <div className="text-gray-600">Deals Analyzed</div>
-          </div>
-          <div className="bg-white p-6 rounded-xl shadow-lg text-center">
-            <div className="text-3xl font-bold text-orange-600 mb-2">12,847</div>
-            <div className="text-gray-600">Weekly Analyses</div>
-          </div>
-        </div>
 
         {/* Core Features Grid */}
         <div className="mb-20">
@@ -161,7 +142,7 @@ export default function FeaturesPage() {
               >
                 <div className="text-4xl mb-4">{feature.icon}</div>
                 <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
-                <p className="text-gray-600 mb-4">{feature.description}</p>
+                <p className="text-gray-900 mb-4">{feature.description}</p>
                 <ul className="space-y-2">
                   {feature.details.slice(0, 3).map((detail, idx) => (
                     <li key={idx} className="flex items-start">
@@ -189,7 +170,7 @@ export default function FeaturesPage() {
                 <span className="text-2xl font-bold text-blue-600">1</span>
               </div>
               <h3 className="font-semibold mb-2">Input Companies</h3>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-900">
                 Enter seller and target companies with auto-validation
               </p>
             </div>
@@ -198,7 +179,7 @@ export default function FeaturesPage() {
                 <span className="text-2xl font-bold text-blue-600">2</span>
               </div>
               <h3 className="font-semibold mb-2">Market Validation</h3>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-900">
                 Real-time verification via Yahoo Finance APIs
               </p>
             </div>
@@ -207,7 +188,7 @@ export default function FeaturesPage() {
                 <span className="text-2xl font-bold text-blue-600">3</span>
               </div>
               <h3 className="font-semibold mb-2">AI Analysis</h3>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-900">
                 GPT-4 + proprietary B2B framework processing
               </p>
             </div>
@@ -216,7 +197,7 @@ export default function FeaturesPage() {
                 <span className="text-2xl font-bold text-blue-600">4</span>
               </div>
               <h3 className="font-semibold mb-2">Actionable Report</h3>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-900">
                 Comprehensive analysis with scoring and templates
               </p>
             </div>
@@ -291,10 +272,10 @@ export default function FeaturesPage() {
                   <th className="px-6 py-4 text-center font-semibold text-blue-600">
                     Our AI Platform
                   </th>
-                  <th className="px-6 py-4 text-center font-semibold text-gray-600">
+                  <th className="px-6 py-4 text-center font-semibold text-gray-900">
                     Basic CRM
                   </th>
-                  <th className="px-6 py-4 text-center font-semibold text-gray-600">
+                  <th className="px-6 py-4 text-center font-semibold text-gray-900">
                     Enterprise Solution
                   </th>
                 </tr>
@@ -340,7 +321,7 @@ export default function FeaturesPage() {
             <div className="bg-white p-8 rounded-xl shadow-lg">
               <div className="text-3xl mb-4">🚀</div>
               <h3 className="text-xl font-semibold mb-3">Startups</h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-900 mb-4">
                 Identify and qualify enterprise opportunities without a large sales team
               </p>
               <ul className="space-y-2 text-sm text-gray-700">
@@ -352,7 +333,7 @@ export default function FeaturesPage() {
             <div className="bg-white p-8 rounded-xl shadow-lg">
               <div className="text-3xl mb-4">📈</div>
               <h3 className="text-xl font-semibold mb-3">Scale-ups</h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-900 mb-4">
                 Scale your sales process with data-driven insights and automation
               </p>
               <ul className="space-y-2 text-sm text-gray-700">
@@ -364,7 +345,7 @@ export default function FeaturesPage() {
             <div className="bg-white p-8 rounded-xl shadow-lg">
               <div className="text-3xl mb-4">🏢</div>
               <h3 className="text-xl font-semibold mb-3">Enterprises</h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-900 mb-4">
                 Enhance your sales intelligence with AI-powered strategic analysis
               </p>
               <ul className="space-y-2 text-sm text-gray-700">
@@ -391,7 +372,7 @@ export default function FeaturesPage() {
                   </div>
                   <div>
                     <div className="font-semibold">GPT-4 & GPT-3.5 Turbo</div>
-                    <div className="text-sm text-gray-600">Advanced language understanding</div>
+                    <div className="text-sm text-gray-900">Advanced language understanding</div>
                   </div>
                 </div>
                 <div className="flex items-center">
@@ -400,7 +381,7 @@ export default function FeaturesPage() {
                   </div>
                   <div>
                     <div className="font-semibold">Proprietary Scoring Algorithm</div>
-                    <div className="text-sm text-gray-600">B2B-specific success patterns</div>
+                    <div className="text-sm text-gray-900">B2B-specific success patterns</div>
                   </div>
                 </div>
                 <div className="flex items-center">
@@ -409,7 +390,7 @@ export default function FeaturesPage() {
                   </div>
                   <div>
                     <div className="font-semibold">Quality Assessment Engine</div>
-                    <div className="text-sm text-gray-600">0-100% accuracy scoring</div>
+                    <div className="text-sm text-gray-900">0-100% accuracy scoring</div>
                   </div>
                 </div>
               </div>
@@ -423,7 +404,7 @@ export default function FeaturesPage() {
                   </div>
                   <div>
                     <div className="font-semibold">Yahoo Finance API</div>
-                    <div className="text-sm text-gray-600">Real-time market data</div>
+                    <div className="text-sm text-gray-900">Real-time market data</div>
                   </div>
                 </div>
                 <div className="flex items-center">
@@ -432,7 +413,7 @@ export default function FeaturesPage() {
                   </div>
                   <div>
                     <div className="font-semibold">Web Intelligence</div>
-                    <div className="text-sm text-gray-600">Private company research</div>
+                    <div className="text-sm text-gray-900">Private company research</div>
                   </div>
                 </div>
                 <div className="flex items-center">
@@ -441,7 +422,7 @@ export default function FeaturesPage() {
                   </div>
                   <div>
                     <div className="font-semibold">Historical Analysis</div>
-                    <div className="text-sm text-gray-600">Pattern recognition database</div>
+                    <div className="text-sm text-gray-900">Pattern recognition database</div>
                   </div>
                 </div>
               </div>
@@ -454,7 +435,7 @@ export default function FeaturesPage() {
           <h2 className="text-4xl font-bold mb-6">
             Ready to Transform Your Sales Process?
           </h2>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-900 mb-8 max-w-2xl mx-auto">
             Join thousands of sales teams using AI to identify, qualify, and close more deals
           </p>
           <div className="flex justify-center gap-4">
@@ -471,7 +452,7 @@ export default function FeaturesPage() {
               View Pricing
             </button>
           </div>
-          <p className="text-sm text-gray-500 mt-4">
+          <p className="text-sm text-gray-900 mt-4">
             No credit card required • 1 free analysis/month • Results in 60 seconds
           </p>
         </div>
