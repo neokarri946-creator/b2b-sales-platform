@@ -83,6 +83,19 @@ export async function GET() {
       }
     }
 
+    // Special unlimited access for specific account
+    const userEmail = user.emailAddresses[0]?.emailAddress || ''
+    if (userEmail === 'neo.kar@icloud.com') {
+      return NextResponse.json({
+        canAnalyze: true,
+        remaining: 999999,
+        used,
+        limit: 999999,
+        subscription: 'unlimited_dev',
+        resetDate: userData.monthly_reset_date
+      })
+    }
+
     // Determine limits based on subscription
     const limits = {
       free: 1,

@@ -17,6 +17,17 @@ export async function POST() {
       }, { status: 401 })
     }
 
+    // Skip usage increment for specific account
+    const userEmail = user.emailAddresses[0]?.emailAddress || ''
+    if (userEmail === 'neo.kar@icloud.com') {
+      return NextResponse.json({
+        success: true,
+        newCount: 0,
+        resetDate: new Date().toISOString(),
+        skipped: true
+      })
+    }
+
     // Get current usage
     const { data: userData, error: fetchError } = await supabase
       .from('users')

@@ -284,39 +284,94 @@ export default function AnalysisResults() {
           </div>
         </div>
 
-        {/* Recommended Approach */}
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <h3 className="text-xl font-semibold text-gray-900 mb-4">
-            Recommended Sales Approach
-          </h3>
-          <p className="text-gray-900 mb-4">
-            {typeof analysis.recommended_approach === 'string' 
-              ? analysis.recommended_approach 
-              : analysis.recommended_approach?.strategy}
-          </p>
-          {analysis.recommended_approach?.stakeholders && (
-            <div className="mb-4">
-              <h4 className="font-semibold text-gray-900 mb-2">Target Stakeholders:</h4>
-              <div className="flex flex-wrap gap-2">
-                {analysis.recommended_approach.stakeholders.map((stakeholder, i) => (
-                  <span key={i} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                    {stakeholder}
-                  </span>
+        {/* Score Reasoning & Methodology */}
+        {analysis.score_reasoning && (
+          <div className="bg-white rounded-lg shadow p-6 mb-8">
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">
+              Score Reasoning & Methodology
+            </h3>
+            
+            {/* Document Header */}
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+              <h4 className="font-semibold text-gray-900 mb-2">
+                {analysis.score_reasoning.document_title}
+              </h4>
+              <p className="text-sm text-gray-700 mb-2">
+                <strong>Methodology:</strong> {analysis.score_reasoning.methodology}
+              </p>
+              {analysis.score_reasoning.overall_score_explanation && (
+                <p className="text-sm text-gray-700">
+                  <strong>Overall Score:</strong> {analysis.score_reasoning.overall_score_explanation}
+                </p>
+              )}
+            </div>
+
+            {/* Dimension Analysis */}
+            {analysis.score_reasoning.dimension_analysis && (
+              <div className="space-y-6">
+                <h4 className="font-semibold text-gray-900 mb-4">Detailed Score Analysis</h4>
+                {analysis.score_reasoning.dimension_analysis.map((dimension, index) => (
+                  <div key={index} className="border-l-4 border-blue-500 pl-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <h5 className="font-semibold text-gray-900">{dimension.dimension}</h5>
+                      <span className="text-lg font-bold text-blue-600">{dimension.score}/10</span>
+                    </div>
+                    
+                    <p className="text-gray-900 mb-3">{dimension.reasoning}</p>
+                    
+                    <div className="bg-blue-50 p-3 rounded mb-3">
+                      <p className="text-sm text-blue-800">
+                        <strong>Supporting Data:</strong> {dimension.supporting_data}
+                      </p>
+                    </div>
+                    
+                    {dimension.sources && dimension.sources.length > 0 && (
+                      <div>
+                        <p className="text-sm font-semibold text-gray-700 mb-2">Sources:</p>
+                        <ul className="space-y-1">
+                          {dimension.sources.map((source, sourceIndex) => (
+                            <li key={sourceIndex} className="text-sm">
+                              <a 
+                                href={source.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-800 underline"
+                              >
+                                {source.title}
+                              </a>
+                              <span className="text-gray-600 ml-2">- {source.relevance}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
-            </div>
-          )}
-          {analysis.recommended_approach?.next_steps && (
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-2">Next Steps:</h4>
-              <ol className="list-decimal list-inside space-y-1">
-                {analysis.recommended_approach.next_steps.map((step, i) => (
-                  <li key={i} className="text-gray-900">{step}</li>
-                ))}
-              </ol>
-            </div>
-          )}
-        </div>
+            )}
+
+            {/* Methodology Notes */}
+            {analysis.score_reasoning.methodology_notes && (
+              <div className="mt-6 p-4 bg-yellow-50 rounded-lg">
+                <h5 className="font-semibold text-yellow-800 mb-2">Methodology Notes</h5>
+                <ul className="space-y-1">
+                  {analysis.score_reasoning.methodology_notes.map((note, index) => (
+                    <li key={index} className="text-sm text-yellow-700">• {note}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Disclaimer */}
+            {analysis.score_reasoning.disclaimer && (
+              <div className="mt-4 p-3 bg-gray-100 rounded">
+                <p className="text-xs text-gray-600 italic">
+                  <strong>Disclaimer:</strong> {analysis.score_reasoning.disclaimer}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Email Templates */}
         {analysis.email_templates && analysis.email_templates.length > 0 && (
