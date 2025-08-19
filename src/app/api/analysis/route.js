@@ -1,13 +1,8 @@
 import { NextResponse } from 'next/server'
-import OpenAI from 'openai'
 import { currentUser } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
-import analyzerFramework, { assessAnalysisQuality } from '@/lib/company-analyzer'
-
-// Initialize OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || 'sk-placeholder',
-})
+import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
 
 // Initialize Supabase
 const supabase = createClient(
@@ -15,25 +10,331 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 )
 
-// Helper function to search for company info on the web
-async function searchCompanyInfo(companyName) {
+// Initialize AI clients
+const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+}) : null
+
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+}) : null
+
+// Company Sales Analyser Framework Structure
+const ANALYSIS_FRAMEWORK = {
+  scoringDimensions: [
+    { name: "Market Alignment", weight: 0.25 },
+    { name: "Budget Readiness", weight: 0.20 },
+    { name: "Technology Fit", weight: 0.20 },
+    { name: "Competitive Position", weight: 0.20 },
+    { name: "Implementation Readiness", weight: 0.15 }
+  ]
+}
+
+// Helper function to gather company intelligence
+async function gatherCompanyIntelligence(companyName) {
   try {
-    // Use a simple web search to gather basic info about the company
-    // In production, you could integrate with APIs like Clearbit, Crunchbase, etc.
-    return {
-      name: companyName,
-      industry: 'Technology/Services', // Default assumption
-      description: `${companyName} is a company in the business sector`,
-      estimatedSize: 'Medium to Large Enterprise',
-      marketPresence: 'Active in market'
+    // Try to get stock market data first
+    const response = await fetch(`${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/api/validate-company`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: companyName })
+    })
+    
+    const data = await response.json()
+    if (data.found && data.company) {
+      return data.company
     }
   } catch (error) {
-    console.log('Web search failed:', error)
-    return {
-      name: companyName,
-      industry: 'Business',
-      description: companyName
+    console.log('Company validation failed:', error)
+  }
+  
+  // Return basic info if validation fails
+  return {
+    name: companyName,
+    industry: 'Business',
+    description: `${companyName} - Industry research required`
+  }
+}
+
+// Generate comprehensive analysis prompt
+function generateAnalysisPrompt(seller, target, sellerInfo, targetInfo) {
+  return `You are an expert B2B sales analyst conducting a comprehensive analysis using the Solution Affinity Scorecard methodology.
+
+CONTEXT:
+Seller Company: ${seller}
+${sellerInfo.industry ? `Industry: ${sellerInfo.industry}` : ''}
+${sellerInfo.marketCap ? `Market Cap: ${sellerInfo.marketCap}` : ''}
+${sellerInfo.revenue ? `Revenue: ${sellerInfo.revenue}` : ''}
+${sellerInfo.employees ? `Employees: ${sellerInfo.employees}` : ''}
+${sellerInfo.description ? `Description: ${sellerInfo.description}` : ''}
+
+Target Company: ${target}
+${targetInfo.industry ? `Industry: ${targetInfo.industry}` : ''}
+${targetInfo.marketCap ? `Market Cap: ${targetInfo.marketCap}` : ''}
+${targetInfo.revenue ? `Revenue: ${targetInfo.revenue}` : ''}
+${targetInfo.employees ? `Employees: ${targetInfo.employees}` : ''}
+${targetInfo.description ? `Description: ${targetInfo.description}` : ''}
+
+TASK: Create a detailed B2B sales analysis that helps ${seller} sell to ${target}.
+
+REQUIRED ANALYSIS STRUCTURE:
+
+1. SOLUTION AFFINITY SCORECARD
+Generate realistic scores based on the companies' profiles:
+- Overall Score (0-100): Calculate weighted average
+- Individual Dimensions (each 0-10):
+  * Market Alignment (25% weight): Industry match, geographic fit, company size alignment
+  * Budget Readiness (20% weight): Financial health, growth trajectory, spending patterns
+  * Technology Fit (20% weight): Tech stack compatibility, digital maturity
+  * Competitive Position (20% weight): Seller's advantages, differentiation
+  * Implementation Readiness (15% weight): Organizational capacity for change
+
+Provide specific rationale for each score based on the companies' actual characteristics.
+
+2. STRATEGIC OPPORTUNITIES (4-5 specific use cases)
+Identify concrete ways ${seller} can help ${target}:
+- Focus on BUSINESS OUTCOMES, not features
+- Be specific about HOW the solution helps
+- Include metrics like time saved, cost reduced, efficiency gained
+- Example: "Automate invoice processing to reduce manual work by 70%, saving 30 hours/week"
+
+3. FINANCIAL ANALYSIS
+- Deal Size Range: Based on target's size and typical spend
+- ROI Projection: 1-3 year outlook with specific percentages
+- Payback Period: In months
+- Budget Source: Which department/budget line
+
+4. KEY CHALLENGES & RISKS
+- Top 3 obstacles to the deal
+- Mitigation strategy for each
+- Competitive threats
+
+5. RECOMMENDED SALES APPROACH
+- Positioning strategy
+- Key stakeholders to target (with titles)
+- Proof points needed
+- 3-step action plan
+
+6. PERSONALIZED EMAIL TEMPLATES
+Create 2 highly personalized emails:
+- Executive outreach focusing on business impact
+- Technical buyer addressing specific needs
+- Reference target's actual industry/challenges
+- Include quantified value propositions
+
+OUTPUT FORMAT:
+Provide a comprehensive JSON response with all sections filled with realistic, specific content based on the actual companies involved. Make the scores reflect real analysis, not random numbers.`
+}
+
+// Perform analysis using Claude (preferred) or GPT-4
+async function performAIAnalysis(prompt) {
+  // Try Claude first (better for complex business analysis)
+  if (anthropic) {
+    try {
+      console.log('Using Claude for analysis...')
+      const message = await anthropic.messages.create({
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 4000,
+        temperature: 0.7,
+        messages: [{
+          role: 'user',
+          content: `${prompt}\n\nProvide the response as a valid JSON object.`
+        }]
+      })
+      
+      const content = message.content[0].text
+      // Extract JSON from the response
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0])
+      }
+    } catch (error) {
+      console.error('Claude analysis failed:', error)
     }
+  }
+  
+  // Fallback to GPT-4 if available
+  if (openai && process.env.OPENAI_API_KEY !== 'sk-placeholder') {
+    try {
+      console.log('Using GPT-4 for analysis...')
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4-turbo-preview',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are an expert B2B sales analyst. Provide detailed, realistic analysis based on actual company characteristics.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 4000,
+        response_format: { type: "json_object" }
+      })
+      
+      return JSON.parse(completion.choices[0]?.message?.content || '{}')
+    } catch (error) {
+      console.error('GPT-4 analysis failed:', error)
+    }
+  }
+  
+  return null
+}
+
+// Generate framework-based analysis when AI is not available
+function generateFrameworkAnalysis(seller, target, sellerInfo, targetInfo) {
+  // Calculate realistic scores based on available data
+  const hasGoodData = !!(sellerInfo.industry && targetInfo.industry)
+  const industryMatch = sellerInfo.industry === targetInfo.industry
+  const sizeMatch = sellerInfo.marketCap && targetInfo.marketCap
+  
+  const marketAlignment = hasGoodData ? (industryMatch ? 7.5 : 5.5) : 6
+  const budgetReadiness = targetInfo.revenue ? 7 : 5
+  const technologyFit = 6.5
+  const competitivePosition = 6
+  const implementationReadiness = 5.5
+  
+  const overallScore = Math.round(
+    marketAlignment * 0.25 +
+    budgetReadiness * 0.20 +
+    technologyFit * 0.20 +
+    competitivePosition * 0.20 +
+    implementationReadiness * 0.15
+  ) * 10
+  
+  return {
+    scorecard: {
+      overall_score: overallScore,
+      dimensions: [
+        {
+          name: "Market Alignment",
+          score: marketAlignment,
+          rationale: industryMatch ? 
+            "Strong industry alignment creates natural synergies" : 
+            "Cross-industry opportunity with transferable solutions",
+          weight: 0.25
+        },
+        {
+          name: "Budget Readiness",
+          score: budgetReadiness,
+          rationale: targetInfo.revenue ? 
+            `Revenue of ${targetInfo.revenue} indicates budget availability` :
+            "Further budget qualification needed",
+          weight: 0.20
+        },
+        {
+          name: "Technology Fit",
+          score: technologyFit,
+          rationale: "Moderate technology alignment with integration opportunities",
+          weight: 0.20
+        },
+        {
+          name: "Competitive Position",
+          score: competitivePosition,
+          rationale: "Established market presence with differentiation potential",
+          weight: 0.20
+        },
+        {
+          name: "Implementation Readiness",
+          score: implementationReadiness,
+          rationale: "Standard implementation complexity expected",
+          weight: 0.15
+        }
+      ]
+    },
+    success_probability: overallScore,
+    strategic_opportunities: [
+      {
+        use_case: "Process Automation",
+        value_magnitude: "HIGH",
+        business_impact: "Reduce manual processes by 60%, saving 25 hours/week",
+        implementation_effort: "MEDIUM"
+      },
+      {
+        use_case: "Data Analytics Enhancement",
+        value_magnitude: "MEDIUM",
+        business_impact: "Improve decision-making speed by 40%",
+        implementation_effort: "LOW"
+      },
+      {
+        use_case: "Customer Experience Optimization",
+        value_magnitude: "HIGH",
+        business_impact: "Increase customer satisfaction by 30%",
+        implementation_effort: "MEDIUM"
+      },
+      {
+        use_case: "Cost Reduction Initiative",
+        value_magnitude: "MEDIUM",
+        business_impact: "Reduce operational costs by 15-20%",
+        implementation_effort: "LOW"
+      }
+    ],
+    financial_analysis: {
+      deal_size_range: "$50,000 - $250,000",
+      roi_projection: "150-200% over 2 years",
+      payback_period: "8-12 months",
+      budget_source: "Operations/IT Budget"
+    },
+    challenges: [
+      {
+        risk: "Existing vendor relationships",
+        mitigation: "Highlight unique differentiators and ROI"
+      },
+      {
+        risk: "Change management resistance",
+        mitigation: "Phased implementation with quick wins"
+      },
+      {
+        risk: "Budget constraints",
+        mitigation: "Flexible pricing and clear ROI demonstration"
+      }
+    ],
+    recommended_approach: {
+      strategy: `Position ${seller} as a strategic partner for ${target}'s digital transformation`,
+      stakeholders: ["CTO/CIO", "VP Operations", "CFO"],
+      proof_points: ["Similar industry case studies", "ROI calculator", "Pilot program"],
+      next_steps: [
+        "Research target's recent initiatives",
+        "Identify internal champion",
+        "Schedule discovery call"
+      ]
+    },
+    email_templates: [
+      {
+        to: "Executive",
+        subject: `${seller} - Driving Operational Excellence at ${target}`,
+        body: `Dear [Executive Name],
+
+I noticed ${target}'s recent focus on ${targetInfo.industry || 'operational'} excellence. At ${seller}, we've helped similar companies reduce operational costs by 20% while improving efficiency by 40%.
+
+Given ${target}'s ${targetInfo.marketCap ? `market position` : 'growth trajectory'}, I believe we could deliver similar results for your organization.
+
+Would you be open to a brief 15-minute call to explore how we might support ${target}'s strategic objectives?
+
+Best regards,
+[Your Name]`
+      },
+      {
+        to: "Technical Buyer",
+        subject: `Quick question about ${target}'s tech stack`,
+        body: `Hi [Name],
+
+I've been researching ${target}'s technology initiatives and noticed you're likely evaluating solutions for process optimization.
+
+At ${seller}, we specialize in helping companies like yours modernize operations without disrupting existing systems. Our platform typically delivers:
+
+• 60% reduction in manual processes
+• 40% faster time-to-market
+• Seamless integration with existing tools
+
+Would you be interested in a technical deep-dive to see if there's a fit?
+
+Best,
+[Your Name]`
+      }
+    ]
   }
 }
 
@@ -41,7 +342,7 @@ export async function POST(request) {
   try {
     // Get current user
     const user = await currentUser()
-    const userEmail = user?.emailAddresses?.[0]?.emailAddress || 'anonymous@example.com'
+    const userId = user?.id
     
     // Get request data
     const { seller, target } = await request.json()
@@ -53,318 +354,90 @@ export async function POST(request) {
       )
     }
 
-    // Try to validate companies first
-    let sellerInfo = { name: seller }
-    let targetInfo = { name: target }
+    // Gather intelligence about both companies
+    console.log('Gathering company intelligence...')
+    const [sellerInfo, targetInfo] = await Promise.all([
+      gatherCompanyIntelligence(seller),
+      gatherCompanyIntelligence(target)
+    ])
 
-    // Check if companies are in stock market
-    try {
-      const baseUrl = request.headers.get('host') || 'localhost:3000'
-      const protocol = request.headers.get('x-forwarded-proto') || 'http'
-      
-      const [sellerValidation, targetValidation] = await Promise.all([
-        fetch(`${protocol}://${baseUrl}/api/validate-company`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: seller })
-        }).then(r => r.json()).catch(() => ({ found: false })),
-        fetch(`${protocol}://${baseUrl}/api/validate-company`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: target })
-        }).then(r => r.json()).catch(() => ({ found: false }))
-      ])
-
-      // Use validated info if found, otherwise search web
-      if (sellerValidation.found && sellerValidation.company) {
-        sellerInfo = sellerValidation.company
-      } else {
-        sellerInfo = await searchCompanyInfo(seller)
-      }
-
-      if (targetValidation.found && targetValidation.company) {
-        targetInfo = targetValidation.company
-      } else {
-        targetInfo = await searchCompanyInfo(target)
-      }
-    } catch (error) {
-      console.log('Validation failed, using company names as-is')
-    }
-
-    // Initialize result
-    let analysisResult
+    // Generate analysis prompt
+    const analysisPrompt = generateAnalysisPrompt(seller, target, sellerInfo, targetInfo)
     
-    // Try AI analysis if API key exists
-    if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'sk-placeholder') {
-      try {
-        // Build context-enhanced prompt using the framework
-        const sellerContext = sellerInfo.industry ? 
-          `${seller} (Industry: ${sellerInfo.industry}${sellerInfo.marketCap ? `, Market Cap: ${sellerInfo.marketCap}` : ''}${sellerInfo.revenue ? `, Revenue: ${sellerInfo.revenue}` : ''}${sellerInfo.employees ? `, Employees: ${sellerInfo.employees}` : ''})` : 
-          seller
-        
-        const targetContext = targetInfo.industry ?
-          `${target} (Industry: ${targetInfo.industry}${targetInfo.marketCap ? `, Market Cap: ${targetInfo.marketCap}` : ''}${targetInfo.employees ? `, Employees: ${targetInfo.employees}` : ''}${targetInfo.revenue ? `, Revenue: ${targetInfo.revenue}` : ''})` :
-          target
-
-        // Use the comprehensive framework prompt
-        const frameworkPrompt = analyzerFramework.getAnalysisPrompt(sellerContext, targetContext)
-
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-3.5-turbo',  // Use GPT-3.5 for reliability
-          messages: [
-            {
-              role: 'system',
-              content: 'You are an expert B2B sales analyst using a comprehensive Solution Affinity Scorecard methodology. Provide detailed, quantified analysis following the exact framework structure provided. Focus on real business outcomes and specific value drivers.'
-            },
-            {
-              role: 'user',
-              content: frameworkPrompt
-            }
-          ],
-          temperature: 0.7,
-          max_tokens: 2500,  // Increased for comprehensive analysis
-          response_format: { type: "json_object" }
-        })
-        
-        const aiResponse = completion.choices[0]?.message?.content || '{}'
-        
-        // Process through framework to ensure proper structure
-        analysisResult = analyzerFramework.processAnalysisResponse(aiResponse)
-        
-      } catch (aiError) {
-        console.error('AI Error:', aiError.message)
-        // Fall back to framework-based basic analysis
-        analysisResult = generateFrameworkBasedAnalysis(seller, target, sellerInfo, targetInfo)
-      }
-    } else {
-      // No API key - use framework-based basic analysis
-      analysisResult = generateFrameworkBasedAnalysis(seller, target, sellerInfo, targetInfo)
+    // Perform AI analysis
+    console.log('Performing AI analysis...')
+    let analysisResult = await performAIAnalysis(analysisPrompt)
+    
+    // If AI analysis fails, use framework-based analysis
+    if (!analysisResult) {
+      console.log('Using framework-based analysis...')
+      analysisResult = generateFrameworkAnalysis(seller, target, sellerInfo, targetInfo)
     }
     
-    // Assess the quality of the analysis
-    const qualityAssessment = assessAnalysisQuality(analysisResult)
-    
-    // Ensure all required fields exist and add framework-specific data
+    // Ensure all required fields exist
     const finalAnalysis = {
-      success_probability: analysisResult.success_probability || Math.floor(Math.random() * 30) + 45,
-      industry_fit: analysisResult.industry_fit || "Potential alignment identified",
-      budget_signal: analysisResult.budget_signal || "Further research needed",
-      timing: analysisResult.timing || "Current quarter favorable",
-      key_opportunities: analysisResult.key_opportunities || [
+      id: `analysis-${Date.now()}`,
+      seller_company: seller,
+      target_company: target,
+      success_probability: analysisResult.scorecard?.overall_score || analysisResult.success_probability || 65,
+      scorecard: analysisResult.scorecard || generateFrameworkAnalysis(seller, target, sellerInfo, targetInfo).scorecard,
+      industry_fit: analysisResult.scorecard?.dimensions?.[0]?.rationale || "Market alignment identified",
+      budget_signal: analysisResult.scorecard?.dimensions?.[1]?.rationale || "Budget qualification required",
+      timing: analysisResult.timing || "Current quarter favorable for engagement",
+      key_opportunities: analysisResult.strategic_opportunities?.map(opp => 
+        typeof opp === 'string' ? opp : `${opp.use_case}: ${opp.business_impact}`
+      ) || [
         "Process optimization opportunity",
         "Efficiency improvement potential",
         "Competitive advantage possible"
       ],
-      challenges: analysisResult.challenges || [
-        "Initial trust building required",
+      challenges: analysisResult.challenges?.map(ch => 
+        typeof ch === 'string' ? ch : ch.risk
+      ) || [
+        "Initial relationship building required",
         "Competitive evaluation likely"
       ],
-      recommended_approach: analysisResult.recommended_approach || `Research ${target}'s current needs and position ${seller}'s solution accordingly`,
-      email_templates: analysisResult.email_templates || [
-        {
-          subject: `${seller} - Partnership Opportunity for ${target}`,
-          body: `Hi [Name],\n\nI noticed that ${target} is growing in your industry. At ${seller}, we help similar companies improve their operations.\n\nWould you be open to a brief conversation about how we might help ${target} achieve its goals?\n\nBest regards,\n[Your Name]`
-        }
-      ],
-      // Add framework-specific fields
-      scorecard: analysisResult.scorecard,
-      financial_analysis: analysisResult.financial_analysis,
       strategic_opportunities: analysisResult.strategic_opportunities,
-      quality_score: qualityAssessment.percentage,
-      quality_assessment: qualityAssessment,
-      framework_version: '2.0',
-      analysis_methodology: 'Solution Affinity Scorecard'
+      financial_analysis: analysisResult.financial_analysis,
+      recommended_approach: typeof analysisResult.recommended_approach === 'string' ? 
+        analysisResult.recommended_approach : 
+        analysisResult.recommended_approach?.strategy || 
+        `Position ${seller} as strategic partner for ${target}`,
+      email_templates: analysisResult.email_templates || [],
+      analysis_methodology: 'Solution Affinity Scorecard v2.0',
+      data_sources: {
+        seller: sellerInfo,
+        target: targetInfo
+      },
+      timestamp: new Date().toISOString()
     }
     
-    // Try to save to database (optional - don't fail if it doesn't work)
-    try {
-      const { data, error } = await supabase
-        .from('analyses')
-        .insert([
-          {
-            user_email: userEmail,
+    // Try to save to database if user is logged in
+    if (userId) {
+      try {
+        await supabase
+          .from('analyses')
+          .insert([{
+            user_id: userId,
             seller_company: seller,
             target_company: target,
             success_probability: finalAnalysis.success_probability,
-            industry_fit: finalAnalysis.industry_fit,
-            budget_signal: finalAnalysis.budget_signal,
-            timing: finalAnalysis.timing,
-            key_opportunities: finalAnalysis.key_opportunities,
-            challenges: finalAnalysis.challenges,
-            recommended_approach: finalAnalysis.recommended_approach,
-            email_templates: finalAnalysis.email_templates,
+            analysis_data: finalAnalysis,
             created_at: new Date().toISOString()
-          }
-        ])
-        .select()
-        .single()
-      
-      if (data) {
-        finalAnalysis.id = data.id
+          }])
+      } catch (dbError) {
+        console.log('Database save failed:', dbError)
+        // Don't fail the request if database save fails
       }
-    } catch (dbError) {
-      console.log('Database save skipped:', dbError.message)
     }
     
-    // Return the analysis
-    return NextResponse.json({
-      id: finalAnalysis.id || `temp-${Date.now()}`,
-      ...finalAnalysis,
-      seller_company: seller,
-      target_company: target
-    })
+    return NextResponse.json(finalAnalysis)
     
   } catch (error) {
-    console.error('Analysis error:', error.message)
-    // Always return something useful
-    return NextResponse.json({
-      id: `temp-${Date.now()}`,
-      success_probability: 65,
-      industry_fit: "Analysis in progress",
-      budget_signal: "Standard enterprise budget expected",
-      timing: "Q1 2025 optimal",
-      key_opportunities: [
-        "Digital transformation opportunity",
-        "Process automation potential",
-        "Growth acceleration possible"
-      ],
-      challenges: [
-        "Stakeholder alignment needed",
-        "Budget approval process"
-      ],
-      recommended_approach: "Start with discovery call to understand specific needs",
-      email_templates: [
-        {
-          subject: "Quick question about your growth plans",
-          body: "I've been following your company's progress and noticed some interesting developments. Would love to share some insights that might be valuable."
-        }
-      ],
-      seller_company: request.seller || "Your Company",
-      target_company: request.target || "Target Company"
-    })
+    console.error('Analysis error:', error)
+    return NextResponse.json(
+      { error: 'Analysis failed. Please try again.' },
+      { status: 500 }
+    )
   }
-}
-
-// Framework-based analysis function with real methodology
-function generateFrameworkBasedAnalysis(seller, target, sellerInfo, targetInfo) {
-  const probability = Math.floor(Math.random() * 30) + 50 // 50-80%
-  
-  // Build comprehensive analysis using framework structure
-  const scorecard = {
-    overall_score: probability,
-    dimensions: analyzerFramework.scoringDimensions.map(dim => ({
-      name: dim.name,
-      score: Math.floor(Math.random() * 3) + 5, // 5-8 range
-      weight: dim.weight,
-      rationale: `${dim.description} for ${target}`,
-      value_prop: `${seller} addresses this through proven solutions`
-    }))
-  }
-  
-  // Generate strategic opportunities based on company info
-  const opportunities = [
-    {
-      use_case: `Digital transformation for ${targetInfo.industry || 'operations'}`,
-      value_magnitude: "HIGH",
-      business_impact: "30-40% efficiency improvement",
-      seller_capability: `${seller}'s core platform`
-    },
-    {
-      use_case: "Process automation and optimization",
-      value_magnitude: "MEDIUM",
-      business_impact: "Reduce manual work by 50%",
-      seller_capability: "Automation suite"
-    },
-    {
-      use_case: "Data-driven decision making",
-      value_magnitude: "HIGH",
-      business_impact: "20% revenue growth potential",
-      seller_capability: "Analytics platform"
-    }
-  ]
-  
-  return {
-    success_probability: probability,
-    industry_fit: `${seller} and ${target} show strong alignment in ${targetInfo.industry || 'business'} sector`,
-    budget_signal: targetInfo.marketCap ? 
-      `Strong financial capacity (${targetInfo.marketCap} market cap)` : 
-      "Enterprise budget likely available",
-    timing: "Q1 2025 presents optimal opportunity window",
-    key_opportunities: opportunities.map(o => 
-      `${o.use_case}: ${o.business_impact}`
-    ),
-    challenges: [
-      "Need to establish executive sponsorship",
-      "May require proof of concept phase"
-    ],
-    recommended_approach: `Focus on ${target}'s ${targetInfo.industry || 'industry'} challenges and demonstrate ${seller}'s proven ROI`,
-    email_templates: [
-      {
-        subject: `${seller} - Transform ${target}'s Operations`,
-        body: `Dear ${target} Leadership,\n\nIn the ${targetInfo.industry || 'current market'}, companies like ${target} are achieving 30-40% efficiency gains through strategic partnerships.\n\n${seller} has helped similar organizations unlock significant value.\n\nWould you be interested in exploring how we could drive similar results for ${target}?\n\nBest regards`
-      },
-      {
-        subject: "Quick Question About Your 2025 Initiatives",
-        body: `Hi [Name],\n\nI've been following ${target}'s impressive growth${targetInfo.marketCap ? ` (${targetInfo.marketCap} market cap)` : ''}.\n\nMany ${targetInfo.industry || 'industry'} leaders are prioritizing digital transformation in 2025.\n\nCurious - what's your top operational challenge for next year?\n\nThanks`
-      }
-    ],
-    // Add framework fields
-    scorecard: scorecard,
-    financial_analysis: {
-      deal_size_range: targetInfo.revenue ? 
-        calculateDealSize(targetInfo.revenue) : 
-        "$100K - $500K",
-      roi_conservative: "150%",
-      roi_optimistic: "300%",
-      payback_period: "12 months"
-    },
-    strategic_opportunities: opportunities,
-    risks: [
-      {
-        risk: "Change management resistance",
-        mitigation: "Phased implementation with quick wins"
-      },
-      {
-        risk: "Integration complexity",
-        mitigation: "Professional services and support"
-      }
-    ]
-  }
-}
-
-// Helper function to calculate deal size based on company revenue
-function calculateDealSize(revenue) {
-  if (!revenue || revenue === 'N/A') return "$100K - $500K"
-  
-  // Extract numeric value from revenue string (e.g., "$1.5B" -> 1500000000)
-  const revenueNum = parseRevenueString(revenue)
-  
-  // Typical B2B deal is 0.5-2% of annual revenue
-  const minDeal = Math.round(revenueNum * 0.005 / 100000) * 100000
-  const maxDeal = Math.round(revenueNum * 0.02 / 100000) * 100000
-  
-  return `$${formatDealSize(minDeal)} - $${formatDealSize(maxDeal)}`
-}
-
-function parseRevenueString(revenue) {
-  if (!revenue || typeof revenue !== 'string') return 100000000 // Default $100M
-  
-  const match = revenue.match(/([\d.]+)\s*([KMBT])/i)
-  if (!match) return 100000000
-  
-  const num = parseFloat(match[1])
-  const multiplier = {
-    'K': 1000,
-    'M': 1000000,
-    'B': 1000000000,
-    'T': 1000000000000
-  }[match[2].toUpperCase()] || 1
-  
-  return num * multiplier
-}
-
-function formatDealSize(num) {
-  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`
-  if (num >= 1000) return `${(num / 1000).toFixed(0)}K`
-  return num.toString()
 }
