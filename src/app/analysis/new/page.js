@@ -12,6 +12,8 @@ export default function NewAnalysis() {
   const [loading, setLoading] = useState(false)
   const [checkingUsage, setCheckingUsage] = useState(true)
   const [usageData, setUsageData] = useState(null)
+  const [analysisProgress, setAnalysisProgress] = useState(0)
+  const [analysisStage, setAnalysisStage] = useState('')
   const [formData, setFormData] = useState({
     seller: '',
     target: ''
@@ -55,6 +57,28 @@ export default function NewAnalysis() {
     }
 
     setLoading(true)
+    setAnalysisProgress(0)
+    setAnalysisStage('Initializing analysis...')
+    
+    // Simulate progress stages
+    const progressStages = [
+      { progress: 10, stage: 'Gathering company intelligence...' },
+      { progress: 25, stage: 'Analyzing market data...' },
+      { progress: 40, stage: 'Evaluating business fit...' },
+      { progress: 60, stage: 'Calculating affinity scores...' },
+      { progress: 80, stage: 'Generating insights...' },
+      { progress: 95, stage: 'Finalizing report...' }
+    ]
+
+    // Start progress simulation
+    let currentStage = 0
+    const progressInterval = setInterval(() => {
+      if (currentStage < progressStages.length) {
+        setAnalysisProgress(progressStages[currentStage].progress)
+        setAnalysisStage(progressStages[currentStage].stage)
+        currentStage++
+      }
+    }, 1000)
     
     try {
       const response = await fetch('/api/analysis', {
@@ -68,6 +92,11 @@ export default function NewAnalysis() {
       }
       
       const data = await response.json()
+      
+      // Complete progress
+      clearInterval(progressInterval)
+      setAnalysisProgress(100)
+      setAnalysisStage('Analysis complete!')
       
       // Store in localStorage for client-side access
       if (data.id) {
@@ -86,15 +115,22 @@ export default function NewAnalysis() {
       
       toast.success('Analysis complete!')
       
-      // Small delay to ensure localStorage write completes
+      // Small delay to show completion
       setTimeout(() => {
         router.push(`/analysis/${data.id}`)
-      }, 100)
+      }, 500)
     } catch (error) {
+      clearInterval(progressInterval)
+      setAnalysisProgress(0)
+      setAnalysisStage('')
       toast.error('Something went wrong. Please try again.')
       console.error(error)
     } finally {
-      setLoading(false)
+      setTimeout(() => {
+        setLoading(false)
+        setAnalysisProgress(0)
+        setAnalysisStage('')
+      }, 500)
     }
   }
 
@@ -220,6 +256,40 @@ export default function NewAnalysis() {
                'Run Analysis →'}
             </button>
           </form>
+
+          {/* Progress Bar */}
+          {loading && (
+            <div className="mt-6 bg-gray-50 rounded-lg p-6 border">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Analyzing Companies
+                </h3>
+                <span className="text-sm font-medium text-gray-600">
+                  {analysisProgress}%
+                </span>
+              </div>
+              
+              <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
+                <div 
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${analysisProgress}%` }}
+                />
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+                <p className="text-sm text-gray-700 font-medium">
+                  {analysisStage}
+                </p>
+              </div>
+              
+              <div className="mt-4 text-xs text-gray-600">
+                <p>🔍 Using Company Sales Analyser framework with AI-powered insights</p>
+                <p>📊 Gathering real-time market data and financial metrics</p>
+                <p>🎯 Calculating Solution Affinity Scorecard across 5 dimensions</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

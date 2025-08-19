@@ -64,76 +64,153 @@ async function gatherCompanyIntelligence(companyName, request) {
 
 // Generate comprehensive analysis prompt
 function generateAnalysisPrompt(seller, target, sellerInfo, targetInfo) {
-  return `You are an expert B2B sales analyst conducting a comprehensive analysis using the Solution Affinity Scorecard methodology.
+  // Calculate company size categories for better analysis
+  const getCompanySize = (employees) => {
+    if (!employees || employees === 'N/A') return 'Unknown'
+    const num = parseInt(employees.replace(/,/g, ''))
+    if (num < 50) return 'Small (< 50 employees)'
+    if (num < 500) return 'Medium (50-500 employees)'
+    if (num < 5000) return 'Large (500-5,000 employees)'
+    return 'Enterprise (5,000+ employees)'
+  }
 
-CONTEXT:
-Seller Company: ${seller}
-${sellerInfo.industry ? `Industry: ${sellerInfo.industry}` : ''}
-${sellerInfo.marketCap ? `Market Cap: ${sellerInfo.marketCap}` : ''}
-${sellerInfo.revenue ? `Revenue: ${sellerInfo.revenue}` : ''}
-${sellerInfo.employees ? `Employees: ${sellerInfo.employees}` : ''}
-${sellerInfo.description ? `Description: ${sellerInfo.description}` : ''}
+  const getMarketCapCategory = (marketCap) => {
+    if (!marketCap || marketCap === 'N/A') return 'Private/Unknown'
+    if (marketCap.includes('T')) return 'Mega-cap (>$1T)'
+    if (marketCap.includes('B')) {
+      const num = parseFloat(marketCap)
+      if (num >= 200) return 'Large-cap ($200B+)'
+      if (num >= 10) return 'Mid-cap ($10B-$200B)'
+      return 'Small-cap ($2B-$10B)'
+    }
+    return 'Micro-cap (<$2B)'
+  }
 
-Target Company: ${target}
-${targetInfo.industry ? `Industry: ${targetInfo.industry}` : ''}
-${targetInfo.marketCap ? `Market Cap: ${targetInfo.marketCap}` : ''}
-${targetInfo.revenue ? `Revenue: ${targetInfo.revenue}` : ''}
-${targetInfo.employees ? `Employees: ${targetInfo.employees}` : ''}
-${targetInfo.description ? `Description: ${targetInfo.description}` : ''}
+  return `You are an expert B2B sales analyst conducting a comprehensive analysis using the Solution Affinity Scorecard methodology. 
+
+CRITICAL: This analysis must be HIGHLY SPECIFIC to these actual companies. Use the real company data provided to make relevant, accurate assessments.
+
+SELLER COMPANY PROFILE:
+Company: ${seller}
+Industry: ${sellerInfo.industry || 'Technology/Software'}
+Market Cap: ${sellerInfo.marketCap || 'N/A'} (${getMarketCapCategory(sellerInfo.marketCap)})
+Annual Revenue: ${sellerInfo.revenue || 'N/A'}
+Employee Count: ${sellerInfo.employees || 'N/A'} (${getCompanySize(sellerInfo.employees)})
+Stock Symbol: ${sellerInfo.symbol || 'N/A'}
+Business Focus: ${sellerInfo.description || `${sellerInfo.industry || 'Technology'} solutions provider`}
+Sector: ${sellerInfo.sector || 'Technology'}
+
+TARGET COMPANY PROFILE:
+Company: ${target}
+Industry: ${targetInfo.industry || 'Technology/Software'}
+Market Cap: ${targetInfo.marketCap || 'N/A'} (${getMarketCapCategory(targetInfo.marketCap)})
+Annual Revenue: ${targetInfo.revenue || 'N/A'}
+Employee Count: ${targetInfo.employees || 'N/A'} (${getCompanySize(targetInfo.employees)})
+Stock Symbol: ${targetInfo.symbol || 'N/A'}
+Business Focus: ${targetInfo.description || `${targetInfo.industry || 'Technology'} solutions provider`}
+Sector: ${targetInfo.sector || 'Technology'}
+Current Stock Price: ${targetInfo.currentPrice || 'N/A'}
+52-Week Range: ${targetInfo.fiftyTwoWeekRange || 'N/A'}
+
+ANALYSIS REQUIREMENTS:
+1. Use ONLY the actual company data provided - no generic assumptions
+2. Reference specific financial metrics, employee counts, industries, market positions
+3. Calculate scores based on real company characteristics and market dynamics
+4. Provide industry-specific insights and relevant competitive landscape analysis
+5. Generate recommendations that reflect the actual business relationship potential
 
 TASK: Create a detailed B2B sales analysis that helps ${seller} sell to ${target}.
 
 REQUIRED ANALYSIS STRUCTURE:
 
 1. SOLUTION AFFINITY SCORECARD
-Generate realistic scores based on the companies' profiles:
-- Overall Score (0-100): Calculate weighted average
-- Individual Dimensions (each 0-10):
-  * Market Alignment (25% weight): Industry match, geographic fit, company size alignment
-  * Budget Readiness (20% weight): Financial health, growth trajectory, spending patterns
-  * Technology Fit (20% weight): Tech stack compatibility, digital maturity
-  * Competitive Position (20% weight): Seller's advantages, differentiation
-  * Implementation Readiness (15% weight): Organizational capacity for change
+Generate realistic scores based on ACTUAL company profiles and market data:
+- Overall Score (0-100): Calculate weighted average using real company metrics
+- Individual Dimensions (each 0-10) - MUST reference actual company data:
 
-Provide specific rationale for each score based on the companies' actual characteristics.
+  * Market Alignment (25% weight): 
+    - Industry compatibility: ${sellerInfo.industry || 'Technology'} to ${targetInfo.industry || 'Technology'}
+    - Company size fit: ${getCompanySize(sellerInfo.employees)} serving ${getCompanySize(targetInfo.employees)}
+    - Market cap alignment: ${getMarketCapCategory(sellerInfo.marketCap)} to ${getMarketCapCategory(targetInfo.marketCap)}
+    - Geographic and sector synergies
+
+  * Budget Readiness (20% weight):
+    - Financial capacity analysis based on ${targetInfo.revenue || 'estimated revenue'} and ${targetInfo.marketCap || 'market position'}
+    - Technology spending patterns for ${targetInfo.industry || 'their industry'} companies
+    - Stock performance implications from ${targetInfo.currentPrice || 'market performance'}
+    - Budget authority levels for ${getCompanySize(targetInfo.employees)} organizations
+
+  * Technology Fit (20% weight):
+    - Digital maturity assessment for ${targetInfo.industry || 'target industry'} sector
+    - Integration complexity with ${target}'s likely tech stack
+    - ${seller}'s solution alignment with ${target}'s business model
+    - Implementation considerations for ${targetInfo.employees || 'organization size'}
+
+  * Competitive Position (20% weight):
+    - ${seller}'s market position in serving ${targetInfo.industry || 'target industry'} clients
+    - Competitive landscape analysis specific to ${target}'s market segment
+    - Differentiation opportunities based on ${target}'s specific business focus
+    - Win/loss probability against competitors in ${targetInfo.industry || 'this sector'}
+
+  * Implementation Readiness (15% weight):
+    - Organizational change capacity for ${getCompanySize(targetInfo.employees)} company
+    - ${target}'s likely IT/operations maturity based on industry and size
+    - Resource availability considerations for ${targetInfo.marketCap || 'company of this scale'}
+    - Timeline expectations for ${targetInfo.industry || 'industry'} implementations
+
+CRITICAL: Each score must include specific references to the companies' actual data points.
 
 2. STRATEGIC OPPORTUNITIES (4-5 specific use cases)
-Identify concrete ways ${seller} can help ${target}:
-- Focus on BUSINESS OUTCOMES, not features
-- Be specific about HOW the solution helps
-- Include metrics like time saved, cost reduced, efficiency gained
-- Example: "Automate invoice processing to reduce manual work by 70%, saving 30 hours/week"
+Identify concrete ways ${seller} can help ${target} based on ACTUAL company profiles:
+- Reference ${target}'s specific industry challenges and business model
+- Scale recommendations to ${target}'s ${getCompanySize(targetInfo.employees)} size and ${targetInfo.revenue || 'revenue level'}
+- Address ${targetInfo.industry || 'industry'}-specific pain points and opportunities
+- Include metrics relevant to ${target}'s business scale and market position
+- Consider ${target}'s likely technology maturity and operational complexity
+- Example format: "Help ${target} [specific business challenge] by [solution] resulting in [quantified outcome] for a ${getCompanySize(targetInfo.employees)} ${targetInfo.industry || 'technology'} company"
 
-3. FINANCIAL ANALYSIS
-- Deal Size Range: Based on target's size and typical spend
-- ROI Projection: 1-3 year outlook with specific percentages
-- Payback Period: In months
-- Budget Source: Which department/budget line
+3. FINANCIAL ANALYSIS (Based on actual company financials)
+- Deal Size Range: Scale to ${target}'s ${targetInfo.revenue || 'estimated revenue'} and ${getMarketCapCategory(targetInfo.marketCap)} status
+- ROI Projection: Industry-specific ROI expectations for ${targetInfo.industry || 'technology'} companies of ${target}'s size
+- Payback Period: Realistic timeline for ${getCompanySize(targetInfo.employees)} ${targetInfo.industry || 'technology'} organizations
+- Budget Source: Specific department/budget line for ${targetInfo.industry || 'technology'} companies with ${targetInfo.employees || 'this employee count'}
+- Investment Capacity: Based on ${targetInfo.marketCap || 'company size'} and ${targetInfo.revenue || 'estimated revenue scale'}
 
 4. KEY CHALLENGES & RISKS
 - Top 3 obstacles to the deal
 - Mitigation strategy for each
 - Competitive threats
 
-5. SCORE REASONING DOCUMENT
-Create a detailed reasoning document that explains each score with:
-- Statistical evidence supporting each dimension score
-- Industry benchmarks and data points
-- Market research citations with specific sources
-- Financial data backing the analysis
-- Methodology explanation for how scores were calculated
-- Include specific URLs and sources where the AI gathered information
-- Format as a professional analysis report with proper citations
+4. KEY CHALLENGES & RISKS (Company-specific)
+Based on ${target}'s actual profile and ${seller}'s market position:
+- Industry-specific obstacles for ${targetInfo.industry || 'technology'} companies
+- Size-related challenges for ${getCompanySize(targetInfo.employees)} organizations  
+- Financial/budget constraints relevant to ${targetInfo.marketCap || 'company scale'}
+- Competitive threats specific to ${target}'s market segment
+- Implementation risks for ${target}'s likely organizational structure
 
-6. PERSONALIZED EMAIL TEMPLATES
-Create 2 highly personalized emails:
-- Executive outreach focusing on business impact
-- Technical buyer addressing specific needs
-- Reference target's actual industry/challenges
-- Include quantified value propositions
+5. SCORE REASONING DOCUMENT (Highly Company-Specific)
+Create detailed reasoning that references ACTUAL company data:
+- Use ${seller} and ${target}'s real financial metrics, industry positions, employee counts
+- Include industry-specific statistics for ${sellerInfo.industry || 'seller industry'} to ${targetInfo.industry || 'target industry'} relationships
+- Reference market data relevant to ${getMarketCapCategory(targetInfo.marketCap)} companies
+- Cite technology adoption patterns for ${targetInfo.industry || 'target industry'} sector
+- Include competitive analysis specific to ${target}'s market segment and size
+- Reference ${target}'s likely budget processes for ${getCompanySize(targetInfo.employees)} organizations
+- Methodology explanation using actual company characteristics
+- Sources must be relevant to the specific industries, company sizes, and market dynamics involved
+
+CRITICAL OUTPUT REQUIREMENTS:
+1. All scores must be calculated using actual company data - NO generic assumptions
+2. Every dimension rationale must reference specific company characteristics
+3. Strategic opportunities must be scaled to ${target}'s actual size and industry
+4. Financial analysis must reflect ${target}'s real market position and revenue scale
+5. Challenges must be specific to the ${sellerInfo.industry || 'seller'} → ${targetInfo.industry || 'target'} relationship
+6. Sources and statistics must be relevant to the actual industries and company types involved
+7. Focus on business analysis - NO email templates or presentation tips
 
 OUTPUT FORMAT:
-Provide a comprehensive JSON response with all sections filled with realistic, specific content based on the actual companies involved. Make the scores reflect real analysis, not random numbers.`
+Provide a comprehensive JSON response focused on analytical insights based on the actual companies involved. Every score, insight, and recommendation must be grounded in the real company data provided.`
 }
 
 // Perform analysis using Claude (preferred) or GPT-4
@@ -414,41 +491,7 @@ function generateFrameworkAnalysis(seller, target, sellerInfo, targetInfo) {
         "All statistics current as of 2024 and verified through primary sources"
       ],
       disclaimer: "This analysis is based on publicly available information and industry benchmarks. Actual results may vary based on specific business requirements, implementation approach, and market conditions."
-    },
-    email_templates: [
-      {
-        to: "Executive",
-        subject: `${seller} - Driving Operational Excellence at ${target}`,
-        body: `Dear [Executive Name],
-
-I noticed ${target}'s recent focus on ${targetInfo.industry || 'operational'} excellence. At ${seller}, we've helped similar companies reduce operational costs by 20% while improving efficiency by 40%.
-
-Given ${target}'s ${targetInfo.marketCap ? `market position` : 'growth trajectory'}, I believe we could deliver similar results for your organization.
-
-Would you be open to a brief 15-minute call to explore how we might support ${target}'s strategic objectives?
-
-Best regards,
-[Your Name]`
-      },
-      {
-        to: "Technical Buyer",
-        subject: `Quick question about ${target}'s tech stack`,
-        body: `Hi [Name],
-
-I've been researching ${target}'s technology initiatives and noticed you're likely evaluating solutions for process optimization.
-
-At ${seller}, we specialize in helping companies like yours modernize operations without disrupting existing systems. Our platform typically delivers:
-
-• 60% reduction in manual processes
-• 40% faster time-to-market
-• Seamless integration with existing tools
-
-Would you be interested in a technical deep-dive to see if there's a fit?
-
-Best,
-[Your Name]`
-      }
-    ]
+    }
   }
 }
 
@@ -518,7 +561,6 @@ export async function POST(request) {
         analysisResult.recommended_approach : 
         analysisResult.recommended_approach?.strategy || 
         `Position ${seller} as strategic partner for ${target}`,
-      email_templates: analysisResult.email_templates || [],
       analysis_methodology: 'Solution Affinity Scorecard v2.0',
       data_sources: {
         seller: sellerInfo,
