@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import toast, { Toaster } from 'react-hot-toast'
@@ -10,6 +10,17 @@ export default function Pricing() {
   const { user } = useUser()
   const router = useRouter()
   const [loading, setLoading] = useState('')
+  const [currentPlan, setCurrentPlan] = useState('free') // Default to free plan
+
+  // Get user's current plan when component mounts
+  useEffect(() => {
+    if (user) {
+      // In a real app, you'd fetch this from your subscription service
+      // For now, we'll assume all logged-in users are on the free plan
+      // TODO: Fetch actual subscription status from Stripe/Supabase
+      setCurrentPlan('free')
+    }
+  }, [user])
 
   const plans = [
     {
@@ -140,17 +151,35 @@ export default function Pricing() {
                   ))}
                 </ul>
                 
-                <button
-                  onClick={() => handleSubscribe(plan.priceId)}
-                  disabled={loading === plan.priceId}
-                  className={`w-full py-3 rounded-lg font-semibold ${
-                    plan.popular
-                      ? 'bg-blue-600 text-white hover:bg-blue-700'
-                      : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                  } disabled:opacity-50`}
-                >
-                  {loading === plan.priceId ? 'Loading...' : plan.cta}
-                </button>
+{user && currentPlan.toLowerCase() === plan.name.toLowerCase() ? (
+                  // Show current plan status
+                  <div className="w-full py-3 rounded-lg font-semibold text-center bg-green-100 text-green-800 border-2 border-green-200">
+                    ✓ Current Plan
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => plan.name === 'Free' && !user ? router.push('/sign-up') : handleSubscribe(plan.priceId)}
+                    disabled={loading === plan.priceId || (!user && plan.name !== 'Free')}
+                    className={`w-full py-3 rounded-lg font-semibold ${
+                      plan.popular
+                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                        : plan.name === 'Free' && !user
+                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                        : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                    } disabled:opacity-50 ${
+                      !user && plan.name !== 'Free' ? 'cursor-not-allowed' : ''
+                    }`}
+                  >
+                    {loading === plan.priceId 
+                      ? 'Loading...' 
+                      : !user && plan.name === 'Free' 
+                      ? 'Sign Up Free'
+                      : !user && plan.name !== 'Free'
+                      ? 'Sign In Required'
+                      : plan.cta
+                    }
+                  </button>
+                )}
               </div>
             </div>
           ))}

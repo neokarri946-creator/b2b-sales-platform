@@ -133,23 +133,53 @@ export default function HomePage() {
       </div>
 
 
-      {/* Final Call to Action */}
-      <div className="py-20 bg-blue-600">
-        <div className="max-w-4xl mx-auto text-center px-4">
-          <h2 className="text-4xl font-bold text-white mb-4">
-            Start Closing More Deals Today
-          </h2>
-          <p className="text-xl text-blue-100 mb-8">
-            Free forever for 1 analysis/month • No credit card required
-          </p>
-          <button
-            onClick={() => router.push('/sign-up')}
-            className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100"
-          >
-            Get Started Free →
-          </button>
+      {/* Final Call to Action - Only show for signed out users */}
+      <SignedOut>
+        <div className="py-20 bg-blue-600">
+          <div className="max-w-4xl mx-auto text-center px-4">
+            <h2 className="text-4xl font-bold text-white mb-4">
+              Start Closing More Deals Today
+            </h2>
+            <p className="text-xl text-blue-100 mb-8">
+              Free forever for 1 analysis/month • No credit card required
+            </p>
+            <button
+              onClick={() => router.push('/sign-up')}
+              className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100"
+            >
+              Get Started Free →
+            </button>
+          </div>
         </div>
-      </div>
+      </SignedOut>
+      
+      {/* For signed-in users, show different CTA */}
+      <SignedIn>
+        <div className="py-20 bg-gradient-to-r from-blue-600 to-blue-700">
+          <div className="max-w-4xl mx-auto text-center px-4">
+            <h2 className="text-4xl font-bold text-white mb-4">
+              Ready for Your Next Analysis?
+            </h2>
+            <p className="text-xl text-blue-100 mb-8">
+              You're on the Free plan • 1 analysis per month
+            </p>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={() => router.push('/analysis/new')}
+                className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100"
+              >
+                Start Analysis →
+              </button>
+              <button
+                onClick={() => router.push('/pricing')}
+                className="bg-blue-500 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-400 border-2 border-white"
+              >
+                Upgrade Plan
+              </button>
+            </div>
+          </div>
+        </div>
+      </SignedIn>
     </>
   )
 }
