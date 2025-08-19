@@ -201,7 +201,7 @@ export default function CompanyAutocomplete({
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="font-semibold text-gray-900">
-                      Use "{company.name}"
+                      Use &ldquo;{company.name}&rdquo;
                     </div>
                     <div className="text-sm text-gray-600 mt-1">
                       Company not found - proceed with custom name
