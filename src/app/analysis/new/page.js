@@ -69,20 +69,27 @@ export default function NewAnalysis() {
       
       const data = await response.json()
       
-      // Store in localStorage if temp ID
-      if (data.id?.startsWith('temp-')) {
+      // Store in localStorage for client-side access
+      if (data.id) {
         localStorage.setItem(`analysis-${data.id}`, JSON.stringify(data))
+        console.log('Stored analysis in localStorage:', `analysis-${data.id}`)
       }
       
       // Increment usage count
-      await fetch('/api/increment-usage', {
-        method: 'POST'
-      })
+      try {
+        await fetch('/api/increment-usage', {
+          method: 'POST'
+        })
+      } catch (error) {
+        console.log('Usage increment failed:', error)
+      }
       
       toast.success('Analysis complete!')
       
-      // Redirect to results page
-      router.push(`/analysis/${data.id}`)
+      // Small delay to ensure localStorage write completes
+      setTimeout(() => {
+        router.push(`/analysis/${data.id}`)
+      }, 100)
     } catch (error) {
       toast.error('Something went wrong. Please try again.')
       console.error(error)

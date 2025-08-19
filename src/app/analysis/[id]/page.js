@@ -13,18 +13,33 @@ export default function AnalysisResults() {
   const [copiedEmail, setCopiedEmail] = useState(null)
 
   useEffect(() => {
+    console.log('Looking for analysis with ID:', params.id)
+    
     // For temporary IDs, get from localStorage
     if (params.id?.startsWith('temp-') || params.id?.startsWith('analysis-')) {
-      const stored = localStorage.getItem(`analysis-${params.id}`)
+      const storageKey = `analysis-${params.id}`
+      console.log('Checking localStorage key:', storageKey)
+      
+      const stored = localStorage.getItem(storageKey)
+      console.log('Found in localStorage:', !!stored)
+      
       if (stored) {
-        setAnalysis(JSON.parse(stored))
-        setLoading(false)
+        try {
+          const parsed = JSON.parse(stored)
+          console.log('Successfully parsed analysis:', parsed.id)
+          setAnalysis(parsed)
+        } catch (error) {
+          console.error('Failed to parse stored analysis:', error)
+        }
       } else {
-        // If not in localStorage, might be a direct link
-        setLoading(false)
+        console.log('No analysis found in localStorage')
+        // Check all localStorage keys for debugging
+        console.log('All localStorage keys:', Object.keys(localStorage))
       }
+      setLoading(false)
     } else {
       // TODO: Fetch from Supabase for real IDs
+      console.log('ID does not match expected pattern')
       setLoading(false)
     }
   }, [params.id])
