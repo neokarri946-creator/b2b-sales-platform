@@ -1,0 +1,149 @@
+{
+  "framework_version": "2.0",
+  "analysis_structure": {
+    "executive_summary": {
+      "required": true,
+      "max_length": 500,
+      "components": [
+        "opportunity_overview",
+        "strategic_fit",
+        "success_probability",
+        "key_value_drivers"
+      ]
+    },
+    "solution_affinity_scorecard": {
+      "required": true,
+      "dimensions": [
+        {
+          "name": "Market Alignment",
+          "weight": 0.25,
+          "scoring_criteria": [
+            "Target company industry match",
+            "Geographic alignment",
+            "Company size fit",
+            "Growth trajectory alignment"
+          ]
+        },
+        {
+          "name": "Budget Readiness",
+          "weight": 0.20,
+          "scoring_criteria": [
+            "Published budget availability",
+            "Recent funding or revenue growth",
+            "Current vendor spend",
+            "Budget cycle timing"
+          ]
+        },
+        {
+          "name": "Technology Fit",
+          "weight": 0.20,
+          "scoring_criteria": [
+            "Tech stack compatibility",
+            "Integration requirements",
+            "Technical maturity level",
+            "IT infrastructure readiness"
+          ]
+        },
+        {
+          "name": "Competitive Position",
+          "weight": 0.20,
+          "scoring_criteria": [
+            "Incumbent vendor strength",
+            "Our unique differentiators",
+            "Switching costs",
+            "Reference customers in industry"
+          ]
+        },
+        {
+          "name": "Implementation Readiness",
+          "weight": 0.15,
+          "scoring_criteria": [
+            "Change management capability",
+            "Resource availability",
+            "Timeline alignment",
+            "Executive sponsorship likelihood"
+          ]
+        }
+      ]
+    },
+    "strategic_opportunities": {
+      "required": true,
+      "min_count": 4,
+      "max_count": 6,
+      "opportunity_structure": {
+        "use_case": "Specific business scenario",
+        "value_magnitude": ["HIGH", "MEDIUM", "LOW"],
+        "business_impact": "Quantified outcome",
+        "implementation_effort": ["LOW", "MEDIUM", "HIGH"],
+        "time_to_value": "Timeline in months"
+      }
+    },
+    "financial_analysis": {
+      "required": true,
+      "components": [
+        "deal_size_range",
+        "roi_projection",
+        "payback_period",
+        "tco_comparison",
+        "budget_source"
+      ]
+    },
+    "risk_assessment": {
+      "required": true,
+      "min_risks": 3,
+      "risk_categories": [
+        "Technical",
+        "Organizational",
+        "Financial",
+        "Competitive",
+        "Timeline"
+      ],
+      "mitigation_required": true
+    },
+    "recommended_approach": {
+      "required": true,
+      "components": [
+        "sales_strategy",
+        "key_stakeholders",
+        "proof_points_needed",
+        "next_steps",
+        "timeline"
+      ]
+    },
+    "email_templates": {
+      "required": true,
+      "min_count": 2,
+      "template_types": [
+        "executive_outreach",
+        "technical_buyer",
+        "economic_buyer",
+        "champion_development"
+      ]
+    }
+  },
+  "quality_criteria": {
+    "minimum_score": 70,
+    "scoring_weights": {
+      "completeness": 0.25,
+      "specificity": 0.25,
+      "business_focus": 0.20,
+      "quantification": 0.20,
+      "actionability": 0.10
+    }
+  },
+  "output_formats": {
+    "markdown": {
+      "enabled": true,
+      "template": "analysis_framework.md"
+    },
+    "json": {
+      "enabled": true,
+      "schema": "analysis_schema.json"
+    },
+    "presentation": {
+      "enabled": true,
+      "slides": 15,
+      "format": "executive_presentation.md"
+    }
+  }
+}

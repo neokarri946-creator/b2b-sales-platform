@@ -1,0 +1,52 @@
+QUICK ONE-TIME SETUP FOR AUTO FILE ORGANIZATION
+=============================================
+
+Option 1: Silent Setup (no prompts)
+----------------------------------
+Run this single command:
+./setup_auto_cleanup_silent.sh
+
+
+Option 2: Interactive Setup (with choices)
+-----------------------------------------
+Run this command:
+./setup_auto_cleanup.sh
+
+
+Option 3: Manual One-Liner
+-------------------------
+Copy and paste this entire command:
+
+pip3 install watchdog && mkdir -p ~/Library/LaunchAgents && echo '<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.salesplanning.fileorganizer</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/python3</string>
+        <string>'"$PWD"'/03_Agent_Configuration/Automation/auto_file_organizer.py</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>'"$PWD"'</string>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>'"$PWD"'/02_Database_System/Logs/organizer.log</string>
+    <key>StandardErrorPath</key>
+    <string>'"$PWD"'/02_Database_System/Logs/organizer_error.log</string>
+</dict>
+</plist>' > ~/Library/LaunchAgents/com.salesplanning.fileorganizer.plist && launchctl load ~/Library/LaunchAgents/com.salesplanning.fileorganizer.plist && echo "✅ Auto file organization setup complete!"
+
+
+To Verify It's Running:
+----------------------
+launchctl list | grep salesplanning
+
+
+To Stop Auto-Organization:
+-------------------------
+launchctl unload ~/Library/LaunchAgents/com.salesplanning.fileorganizer.plist

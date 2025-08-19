@@ -1,0 +1,59 @@
+{
+  "company": {
+    "name": "Your Company Name",
+    "industry": "Technology/Software",
+    "website": "https://yourcompany.com",
+    "description": "B2B solution provider specializing in enterprise software"
+  },
+  "products": [
+    {
+      "name": "Product/Service 1",
+      "category": "Software Solution",
+      "target_market": "Enterprise",
+      "key_benefits": [
+        "Increases efficiency by 40%",
+        "Reduces costs by 25%",
+        "Improves accuracy by 90%"
+      ]
+    }
+  ],
+  "value_propositions": [
+    "Rapid implementation (under 30 days)",
+    "Proven ROI within 6 months",
+    "24/7 enterprise support",
+    "Industry-leading security"
+  ],
+  "competitive_advantages": [
+    "10x faster than competitors",
+    "Patented technology",
+    "Fortune 500 client base",
+    "Award-winning customer service"
+  ],
+  "scoring_dimensions": [
+    {
+      "name": "Market Alignment",
+      "weight": 0.25,
+      "description": "How well target aligns with our market focus"
+    },
+    {
+      "name": "Budget Readiness",
+      "weight": 0.20,
+      "description": "Financial capacity and budget availability"
+    },
+    {
+      "name": "Technology Fit",
+      "weight": 0.20,
+      "description": "Compatibility with existing tech stack"
+    },
+    {
+      "name": "Competitive Position",
+      "weight": 0.20,
+      "description": "Our competitive advantage in this opportunity"
+    },
+    {
+      "name": "Implementation Readiness",
+      "weight": 0.15,
+      "description": "Organizational readiness for change"
+    }
+  ]
+}

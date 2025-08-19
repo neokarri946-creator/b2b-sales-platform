@@ -1,0 +1,70 @@
+
+> b2b-sales-platform@0.1.0 dev
+> next dev --turbopack
+
+ ⚠ Warning: Found multiple lockfiles. Selecting /Users/neokarri/package-lock.json.
+   Consider removing the lockfiles at:
+   * /Users/neokarri/Desktop/b2b-sales-platform/package-lock.json
+
+ ⚠ Port 3000 is in use by process 35044, using available port 3002 instead.
+   ▲ Next.js 15.4.6 (Turbopack)
+   - Local:        http://localhost:3002
+   - Network:      http://192.168.1.85:3002
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Compiled middleware in 176ms
+ ✓ Ready in 1013ms
+ ✓ Compiled middleware in 1ms
+ ✓ Compiled middleware in 1ms
+ ✓ Compiled middleware in 0ms
+ ✓ Compiled middleware in 0ms
+ ✓ Compiled middleware in 4ms
+ ✓ Compiled middleware in 1ms
+ ✓ Compiled middleware in 2ms
+ ✓ Compiled middleware in 1ms
+ ✓ Compiled middleware in 0ms
+ ✓ Compiled middleware in 0ms
+ ✓ Compiled middleware in 3ms
+ ✓ Compiled in 32ms
+ ✓ Compiled middleware in 3ms
+ ✓ Compiled middleware in 0ms
+ ✓ Compiled middleware in 1ms
+ ✓ Compiled middleware in 3ms
+ ✓ Compiled middleware in 0ms
+[?25h
+mpiling / ...
+ ✓ Compiled / in 1858ms
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/neokarri/Desktop/b2b-sales-platform/.next/static/development/_buildManifest.js.tmp.llq6387c3jh'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/neokarri/Desktop/b2b-sales-platform/.next/static/development/_buildManifest.js.tmp.llq6387c3jh'
+}
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 542ms
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/neokarri/Desktop/b2b-sales-platform/.next/static/development/_buildManifest.js.tmp.lgv9nk43lpo'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/neokarri/Desktop/b2b-sales-platform/.next/static/development/_buildManifest.js.tmp.lgv9nk43lpo'
+}
+[Error: ENOENT: no such file or directory, open '/Users/neokarri/Desktop/b2b-sales-platform/.next/static/development/_buildManifest.js.tmp.llq6387c3jh'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/neokarri/Desktop/b2b-sales-platform/.next/static/development/_buildManifest.js.tmp.llq6387c3jh'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/neokarri/Desktop/b2b-sales-platform/.next/static/development/_buildManifest.js.tmp.mae2sh0imne'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/neokarri/Desktop/b2b-sales-platform/.next/static/development/_buildManifest.js.tmp.mae2sh0imne'
+}
+[Error: ENOENT: no such file or directory, open '/Users/neokarri/Desktop/b2b-sales-platform/.next/static/development/_buildManifest.js.tmp.lifbxy5sz3'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/neokarri/Desktop/b2b-sales-platform/.next/static/development/_buildManifest.js.tmp.lifbxy5sz3'
+}
+[?25h
