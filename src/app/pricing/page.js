@@ -125,9 +125,9 @@ export default function Pricing() {
               )}
               
               <div className="p-8">
-                <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
                 <div className="mb-6">
-                  <span className="text-4xl font-bold">{plan.price}</span>
+                  <span className="text-4xl font-bold text-gray-900">{plan.price}</span>
                   <span className="text-gray-900">{plan.period}</span>
                 </div>
                 
@@ -146,7 +146,7 @@ export default function Pricing() {
                   className={`w-full py-3 rounded-lg font-semibold ${
                     plan.popular
                       ? 'bg-blue-600 text-white hover:bg-blue-700'
-                      : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                      : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
                   } disabled:opacity-50`}
                 >
                   {loading === plan.priceId ? 'Loading...' : plan.cta}
@@ -158,27 +158,27 @@ export default function Pricing() {
 
         {/* FAQ Section */}
         <div className="mt-20">
-          <h2 className="text-3xl font-bold text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
             Frequently Asked Questions
           </h2>
           
           <div className="max-w-3xl mx-auto space-y-6">
             <div className="bg-white rounded-lg p-6">
-              <h3 className="font-semibold mb-2">Can I cancel anytime?</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">Can I cancel anytime?</h3>
               <p className="text-gray-900">
                 You can upgrade, downgrade, or cancel your subscription at any time.
               </p>
             </div>
             
             <div className="bg-white rounded-lg p-6">
-              <h3 className="font-semibold mb-2">Is there really a free plan?</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">Is there really a free plan?</h3>
               <p className="text-gray-900">
                 Yes! You get 1 free analysis every month with our free plan.
               </p>
             </div>
             
             <div className="bg-white rounded-lg p-6">
-              <h3 className="font-semibold mb-2">What payment methods do you accept?</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">What payment methods do you accept?</h3>
               <p className="text-gray-900">
                 We accept all major credit cards through Stripe.
               </p>

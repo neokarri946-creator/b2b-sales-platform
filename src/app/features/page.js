@@ -432,7 +432,7 @@ export default function FeaturesPage() {
 
         {/* CTA Section */}
         <div className="text-center">
-          <h2 className="text-4xl font-bold mb-6">
+          <h2 className="text-4xl font-bold text-gray-900 mb-6">
             Ready to Transform Your Sales Process?
           </h2>
           <p className="text-xl text-gray-900 mb-8 max-w-2xl mx-auto">
