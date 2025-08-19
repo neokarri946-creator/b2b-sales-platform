@@ -188,7 +188,7 @@ export async function POST(request) {
     }
 
     return NextResponse.json({ 
-      suggestions,
+      companies: suggestions,
       query,
       timestamp: new Date().toISOString()
     })
@@ -198,7 +198,7 @@ export async function POST(request) {
     
     // Return popular companies as fallback
     return NextResponse.json({ 
-      suggestions: popularCompanies.slice(0, 5),
+      companies: popularCompanies.slice(0, 5),
       error: 'Search service temporarily unavailable',
       fallback: true
     })

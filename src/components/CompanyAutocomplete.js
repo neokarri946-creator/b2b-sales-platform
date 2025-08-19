@@ -10,18 +10,20 @@ export default function CompanyAutocomplete({
   required = false 
 }) {
   const [inputValue, setInputValue] = useState(value || '')
-  const [isValidating, setIsValidating] = useState(false)
-  const [showSuggestion, setShowSuggestion] = useState(false)
-  const [validatedCompany, setValidatedCompany] = useState(null)
-  const [validationMessage, setValidationMessage] = useState('')
+  const [isSearching, setIsSearching] = useState(false)
+  const [suggestions, setSuggestions] = useState([])
+  const [showDropdown, setShowDropdown] = useState(false)
+  const [selectedIndex, setSelectedIndex] = useState(-1)
+  const [selectedCompany, setSelectedCompany] = useState(null)
   const dropdownRef = useRef(null)
   const inputRef = useRef(null)
+  const searchTimeoutRef = useRef(null)
 
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowSuggestion(false)
+        setShowDropdown(false)
       }
     }
 
@@ -31,76 +33,108 @@ export default function CompanyAutocomplete({
     }
   }, [])
 
-  // Handle input change
-  const handleInputChange = (e) => {
-    const newValue = e.target.value
-    setInputValue(newValue)
-    onChange(newValue)
-    setValidatedCompany(null)
-    setShowSuggestion(false)
-    setValidationMessage('')
-  }
-
-  // Validate company when user finishes typing (on blur)
-  const validateCompany = async () => {
-    if (!inputValue || inputValue.length < 2) {
-      setValidationMessage('')
+  // Search for companies as user types
+  const searchCompanies = async (query) => {
+    if (!query || query.length < 2) {
+      setSuggestions([])
+      setShowDropdown(false)
       return
     }
 
-    setIsValidating(true)
-    setValidationMessage('Validating company...')
+    setIsSearching(true)
     
     try {
-      const response = await fetch('/api/validate-company', {
+      const response = await fetch('/api/search-companies', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: inputValue })
+        body: JSON.stringify({ query })
       })
 
       if (response.ok) {
         const data = await response.json()
-        if (data.found && data.company) {
-          setValidatedCompany(data.company)
-          setShowSuggestion(true)
-          setValidationMessage('')
+        if (data.companies && data.companies.length > 0) {
+          setSuggestions(data.companies)
+          setShowDropdown(true)
+          setSelectedIndex(-1)
         } else {
-          // Company not found in stock market, but allow user to continue
-          setValidatedCompany(null)
-          setShowSuggestion(false)
-          setValidationMessage('Company not found in stock market. You can still proceed with this name.')
+          // If no companies found, allow manual entry
+          setSuggestions([{
+            name: query,
+            symbol: 'CUSTOM',
+            description: 'Use custom company name',
+            isCustom: true
+          }])
+          setShowDropdown(true)
         }
       }
     } catch (error) {
-      console.error('Validation error:', error)
-      setValidationMessage('Unable to validate. You can still proceed with this name.')
+      console.error('Search error:', error)
+      // On error, allow manual entry
+      setSuggestions([{
+        name: query,
+        symbol: 'CUSTOM',
+        description: 'Use custom company name',
+        isCustom: true
+      }])
+      setShowDropdown(true)
     } finally {
-      setIsValidating(false)
+      setIsSearching(false)
     }
   }
 
-  // Handle company confirmation
-  const confirmCompany = (company) => {
+  // Handle input change with debounced search
+  const handleInputChange = (e) => {
+    const newValue = e.target.value
+    setInputValue(newValue)
+    setSelectedCompany(null)
+    
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
+    }
+
+    // Set new timeout for search
+    searchTimeoutRef.current = setTimeout(() => {
+      searchCompanies(newValue)
+    }, 300) // 300ms debounce
+  }
+
+  // Handle company selection
+  const selectCompany = (company) => {
     const companyName = company.name
     setInputValue(companyName)
     onChange(companyName)
-    setValidatedCompany(company)
-    setShowSuggestion(false)
-    setValidationMessage('✓ Company validated')
+    setSelectedCompany(company)
+    setShowDropdown(false)
+    setSuggestions([])
   }
 
   // Handle keyboard navigation
   const handleKeyDown = (e) => {
-    if (!showSuggestion || !validatedCompany) return
+    if (!showDropdown || suggestions.length === 0) return
 
     switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        setSelectedIndex(prev => 
+          prev < suggestions.length - 1 ? prev + 1 : prev
+        )
+        break
+      
+      case 'ArrowUp':
+        e.preventDefault()
+        setSelectedIndex(prev => prev > 0 ? prev - 1 : -1)
+        break
+      
       case 'Enter':
         e.preventDefault()
-        confirmCompany(validatedCompany)
+        if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
+          selectCompany(suggestions[selectedIndex])
+        }
         break
       
       case 'Escape':
-        setShowSuggestion(false)
+        setShowDropdown(false)
         break
     }
   }
@@ -126,24 +160,23 @@ export default function CompanyAutocomplete({
           value={inputValue}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          onBlur={validateCompany}
           onFocus={() => {
-            if (validatedCompany) {
-              setShowSuggestion(true)
+            if (inputValue.length >= 2) {
+              searchCompanies(inputValue)
             }
           }}
           placeholder={placeholder}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all pr-10 placeholder-gray-700"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all pr-10 placeholder-gray-700 text-gray-900"
           autoComplete="off"
           required={required}
         />
 
         {/* Status indicator */}
         <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-          {isValidating && (
+          {isSearching && (
             <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
           )}
-          {!isValidating && validatedCompany && (
+          {!isSearching && selectedCompany && !selectedCompany.isCustom && (
             <svg className="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
@@ -151,96 +184,87 @@ export default function CompanyAutocomplete({
         </div>
       </div>
 
-      {/* Single company suggestion after validation */}
-      {showSuggestion && validatedCompany && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl">
-          <div
-            onClick={() => confirmCompany(validatedCompany)}
-            className="p-4 cursor-pointer transition-all hover:bg-blue-50"
-          >
-            {/* Company header */}
-            <div className="flex justify-between items-start mb-2">
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-gray-900 text-lg">
-                    {validatedCompany.name}
-                  </span>
-                  {validatedCompany.symbol && validatedCompany.symbol !== 'N/A' && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                      {validatedCompany.symbol}
-                    </span>
-                  )}
-                </div>
-                <div className="text-sm text-gray-900 mt-1">
-                  {validatedCompany.description || validatedCompany.industry || 'Click to confirm this company'}
-                </div>
-              </div>
-              {validatedCompany.currentPrice && validatedCompany.currentPrice !== 'N/A' && (
-                <div className="text-right ml-4">
-                  <div className="text-lg font-semibold text-gray-900">
-                    {validatedCompany.currentPrice}
+      {/* Dropdown with company suggestions */}
+      {showDropdown && suggestions.length > 0 && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-96 overflow-y-auto">
+          {suggestions.map((company, index) => (
+            <div
+              key={index}
+              onClick={() => selectCompany(company)}
+              onMouseEnter={() => setSelectedIndex(index)}
+              className={`p-4 cursor-pointer transition-all ${
+                index === selectedIndex ? 'bg-blue-50' : 'hover:bg-gray-50'
+              } ${index > 0 ? 'border-t border-gray-100' : ''}`}
+            >
+              {company.isCustom ? (
+                // Custom company entry
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-semibold text-gray-900">
+                      Use "{company.name}"
+                    </div>
+                    <div className="text-sm text-gray-600 mt-1">
+                      Company not found - proceed with custom name
+                    </div>
                   </div>
-                  {validatedCompany.dayChange && validatedCompany.dayChange !== 'N/A' && (
-                    <div className={`text-sm font-medium ${
-                      validatedCompany.dayChange.startsWith('-') ? 'text-red-600' : 'text-green-600'
-                    }`}>
-                      {validatedCompany.dayChange}
+                  <span className="text-gray-400">
+                    Press Enter to use
+                  </span>
+                </div>
+              ) : (
+                // Real company from search
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-gray-900 text-lg">
+                        {company.name}
+                      </span>
+                      {company.symbol && company.symbol !== 'N/A' && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                          {company.symbol}
+                        </span>
+                      )}
+                    </div>
+                    {company.description && (
+                      <div className="text-sm text-gray-600 mt-1">
+                        {company.description}
+                      </div>
+                    )}
+                    {/* Show key metrics if available */}
+                    <div className="flex gap-4 mt-2 text-xs text-gray-600">
+                      {company.marketCap && company.marketCap !== 'N/A' && (
+                        <span>Market Cap: {company.marketCap}</span>
+                      )}
+                      {company.employees && company.employees !== 'N/A' && (
+                        <span>Employees: {formatNumber(company.employees)}</span>
+                      )}
+                    </div>
+                  </div>
+                  {company.currentPrice && company.currentPrice !== 'N/A' && (
+                    <div className="text-right ml-4">
+                      <div className="text-lg font-semibold text-gray-900">
+                        {company.currentPrice}
+                      </div>
+                      {company.dayChange && company.dayChange !== 'N/A' && (
+                        <div className={`text-sm font-medium ${
+                          company.dayChange.startsWith('-') ? 'text-red-600' : 'text-green-600'
+                        }`}>
+                          {company.dayChange}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
               )}
             </div>
-
-            {/* Company details grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-              {validatedCompany.marketCap && validatedCompany.marketCap !== 'N/A' && (
-                <div>
-                  <span className="text-gray-900">Market Cap:</span>
-                  <span className="ml-1 font-medium text-gray-900">{validatedCompany.marketCap}</span>
-                </div>
-              )}
-              {validatedCompany.revenue && validatedCompany.revenue !== 'N/A' && (
-                <div>
-                  <span className="text-gray-900">Revenue:</span>
-                  <span className="ml-1 font-medium text-gray-900">{validatedCompany.revenue}</span>
-                </div>
-              )}
-              {validatedCompany.employees && validatedCompany.employees !== 'N/A' && (
-                <div>
-                  <span className="text-gray-900">Employees:</span>
-                  <span className="ml-1 font-medium text-gray-900">{formatNumber(validatedCompany.employees)}</span>
-                </div>
-              )}
-              {validatedCompany.sector && (
-                <div>
-                  <span className="text-gray-900">Sector:</span>
-                  <span className="ml-1 font-medium text-gray-900">{validatedCompany.sector}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Additional info if available */}
-            {validatedCompany.fiftyTwoWeekRange && validatedCompany.fiftyTwoWeekRange !== 'N/A' && (
-              <div className="mt-2 text-xs text-gray-900">
-                52-Week Range: {validatedCompany.fiftyTwoWeekRange}
-              </div>
-            )}
-            
-            <div className="mt-3 text-sm text-green-600 font-medium">
-              ✓ Click to confirm this is the correct company
-            </div>
-          </div>
+          ))}
         </div>
       )}
 
-      {/* Validation message */}
-      {validationMessage && (
-        <p className={`mt-1 text-xs ${
-          validationMessage.includes('✓') ? 'text-green-600' : 
-          validationMessage.includes('not found') ? 'text-amber-600' : 
-          'text-gray-900'
-        }`}>
-          {validationMessage}
+      {/* Selected company indicator */}
+      {selectedCompany && !selectedCompany.isCustom && (
+        <p className="mt-1 text-xs text-green-600">
+          ✓ {selectedCompany.name} selected
         </p>
       )}
     </div>
