@@ -240,9 +240,9 @@ export default function NewAnalysis() {
                 <li>✓ Success probability score (0-100%)</li>
                 <li>✓ Industry and company fit analysis</li>
                 <li>✓ Budget and timing assessment</li>
-                <li>✓ 4 personalized email templates</li>
                 <li>✓ Key opportunities and challenges</li>
                 <li>✓ Recommended approach strategy</li>
+                <li>✓ Fresh market data and insights</li>
               </ul>
             </div>
             

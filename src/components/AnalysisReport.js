@@ -94,6 +94,39 @@ export default function AnalysisReport({ analysis }) {
 
           {/* Individual Dimensions with Expandable Details */}
           <div className="space-y-6">
+            {/* Expand/Collapse All Button */}
+            {analysis.scorecard.dimensions?.some(d => d.detailed_analysis) && (
+              <div className="flex justify-end mb-4">
+                <button
+                  onClick={() => {
+                    const allExpanded = analysis.scorecard.dimensions.every(d => 
+                      expandedDimensions[d.name]
+                    )
+                    const newState = {}
+                    analysis.scorecard.dimensions.forEach(d => {
+                      if (d.detailed_analysis) {
+                        newState[d.name] = !allExpanded
+                      }
+                    })
+                    setExpandedDimensions(newState)
+                  }}
+                  className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center bg-blue-50 px-3 py-1.5 rounded-lg"
+                >
+                  {analysis.scorecard.dimensions.every(d => expandedDimensions[d.name]) ? (
+                    <>
+                      <ChevronUpIcon className="h-4 w-4 mr-1" />
+                      Collapse All
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDownIcon className="h-4 w-4 mr-1" />
+                      Expand All
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+            
             {analysis.scorecard.dimensions?.map((dimension, index) => (
               <div key={index} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between mb-2">
@@ -116,12 +149,16 @@ export default function AnalysisReport({ analysis }) {
                     {dimension.detailed_analysis && (
                       <button
                         onClick={() => toggleDimension(dimension.name)}
-                        className="mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center"
+                        className={`mt-3 text-sm font-medium flex items-center px-2 py-1 rounded transition-colors ${
+                          expandedDimensions[dimension.name] 
+                            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' 
+                            : 'text-blue-600 hover:text-blue-800'
+                        }`}
                       >
                         {expandedDimensions[dimension.name] ? (
                           <>
                             <ChevronUpIcon className="h-4 w-4 mr-1" />
-                            View Less
+                            Collapse
                           </>
                         ) : (
                           <>
@@ -213,6 +250,17 @@ export default function AnalysisReport({ analysis }) {
                             </div>
                           </div>
                         )}
+                        
+                        {/* Bottom Collapse Button */}
+                        <div className="mt-4 flex justify-center">
+                          <button
+                            onClick={() => toggleDimension(dimension.name)}
+                            className="bg-gray-100 text-gray-700 hover:bg-gray-200 text-sm font-medium flex items-center px-3 py-1.5 rounded transition-colors"
+                          >
+                            <ChevronUpIcon className="h-4 w-4 mr-1" />
+                            Collapse Section
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>

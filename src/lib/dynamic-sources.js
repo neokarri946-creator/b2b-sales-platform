@@ -20,7 +20,7 @@ export function generateDynamicSources(dimension, sellerInfo, targetInfo) {
       if (targetInfo.market_data?.market_cap) {
         sources.push({
           title: `${targetInfo.name} Market Position - ${currentMonth} ${currentYear}`,
-          url: `https://finance.yahoo.com/quote/${targetInfo.symbol || targetInfo.name}`,
+          url: `https://finance.yahoo.com/`,
           quote: `${targetInfo.name} with market cap of ${targetInfo.market_data.market_cap} represents a ${
             parseFloat(targetInfo.market_data.market_cap) > 100 ? 'major enterprise' : 'significant'
           } opportunity for ${sellerInfo.name}'s solutions in the ${targetInfo.industry || 'technology'} sector.`,
@@ -51,7 +51,7 @@ export function generateDynamicSources(dimension, sellerInfo, targetInfo) {
       if (targetInfo.market_data?.revenue_growth) {
         sources.push({
           title: `${targetInfo.name} Financial Performance Q${Math.ceil((currentDate.getMonth() + 1) / 3)} ${currentYear}`,
-          url: `https://www.marketwatch.com/investing/stock/${targetInfo.symbol || targetInfo.name.toLowerCase()}`,
+          url: `https://www.marketwatch.com/`,
           quote: `${targetInfo.name} reported ${targetInfo.market_data.revenue_growth} revenue growth, indicating strong budget capacity for strategic technology investments in ${currentYear}.`,
           relevance: "Current financial performance and budget indicators",
           authority: "Financial market analysis",
@@ -99,7 +99,7 @@ export function generateDynamicSources(dimension, sellerInfo, targetInfo) {
       // Add technology stack information
       sources.push({
         title: `${targetInfo.name} Technology Stack Analysis ${currentYear}`,
-        url: `https://stackshare.io/companies/${targetInfo.name.toLowerCase().replace(/\s+/g, '-')}`,
+        url: `https://stackshare.io/`,
         quote: `${targetInfo.name} utilizes modern cloud infrastructure and APIs, enabling seamless integration with ${sellerInfo.name}'s ${sellerInfo.industry || 'technology'} solutions.`,
         relevance: "Current technology infrastructure and integration capabilities",
         authority: "Technology stack analysis",
@@ -161,7 +161,7 @@ export function generateDynamicSources(dimension, sellerInfo, targetInfo) {
       if (targetInfo.employees) {
         sources.push({
           title: `${targetInfo.name} Organizational Capability ${currentYear}`,
-          url: `https://www.linkedin.com/company/${targetInfo.name.toLowerCase().replace(/\s+/g, '-')}`,
+          url: `https://www.linkedin.com/`,
           quote: `With ${targetInfo.employees} employees, ${targetInfo.name} has the organizational capacity and resources for successful implementation of enterprise solutions.`,
           relevance: "Current organizational size and implementation capacity",
           authority: "Company profile analysis",
