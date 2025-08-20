@@ -34,12 +34,31 @@ export async function POST(request) {
     })
 
     // Get the base URL for redirects
-    const baseUrl = process.env.NEXT_PUBLIC_URL || 
-                   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+    let baseUrl = 'https://b2b-sales-platform.vercel.app'
+    
+    if (process.env.NODE_ENV === 'development') {
+      baseUrl = 'http://localhost:3000'
+    } else if (process.env.NEXT_PUBLIC_URL) {
+      baseUrl = process.env.NEXT_PUBLIC_URL
+    } else if (process.env.VERCEL_URL) {
+      baseUrl = `https://${process.env.VERCEL_URL}`
+    }
+    
+    // Ensure URL doesn't have trailing slash
+    baseUrl = baseUrl.replace(/\/$/, '')
     
     console.log('Base URL for redirects:', baseUrl)
+    console.log('Success URL:', `${baseUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}`)
+    console.log('Cancel URL:', `${baseUrl}/pricing?canceled=true`)
     
     // Create Stripe checkout session
+    console.log('Creating session with params:', {
+      priceId,
+      email: user.emailAddresses[0].emailAddress,
+      successUrl: `${baseUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${baseUrl}/pricing?canceled=true`
+    })
+    
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
