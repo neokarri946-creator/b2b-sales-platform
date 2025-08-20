@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useUser } from '@clerk/nextjs'
+import AnalysisReport from '@/components/AnalysisReport'
 
 export default function AnalysisResults() {
   const params = useParams()
@@ -204,6 +205,29 @@ export default function AnalysisResults() {
             Run New Analysis
           </button>
         </div>
+      </div>
+    )
+  }
+
+  // Check if we have the enhanced analysis format
+  const hasEnhancedFormat = analysis.scorecard?.dimensions?.[0]?.detailed_analysis || 
+                            analysis.scorecard?.dimensions?.[0]?.summary
+
+  // Use enhanced component if available
+  if (hasEnhancedFormat) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-white shadow">
+          <div className="max-w-7xl mx-auto px-4 py-6">
+            <button
+              onClick={() => router.push('/')}
+              className="text-gray-900 hover:text-gray-900"
+            >
+              ← Back to Home
+            </button>
+          </div>
+        </div>
+        <AnalysisReport analysis={analysis} />
       </div>
     )
   }
