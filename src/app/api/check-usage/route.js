@@ -85,6 +85,8 @@ export async function GET() {
 
     // Special unlimited access for specific account
     const userEmail = user.emailAddresses[0]?.emailAddress || ''
+    const used = userData.monthly_analyses_used || 0
+    
     if (userEmail === 'neo.kar@icloud.com') {
       return NextResponse.json({
         canAnalyze: true,
@@ -96,6 +98,16 @@ export async function GET() {
       })
     }
 
+    // Check for active Stripe subscription (in addition to database status)
+    const { data: subscription } = await supabase
+      .from('user_subscriptions')
+      .select('plan, status')
+      .eq('user_id', user.id)
+      .single()
+
+    // Use subscription from user_subscriptions table if it exists and is active
+    const activeSubscription = subscription?.status === 'active' ? subscription.plan : userData.subscription_status
+
     // Determine limits based on subscription
     const limits = {
       free: 1,
@@ -103,8 +115,7 @@ export async function GET() {
       growth: 999999 // Unlimited
     }
 
-    const limit = limits[userData.subscription_status] || 1
-    const used = userData.monthly_analyses_used || 0
+    const limit = limits[activeSubscription] || 1
     const canAnalyze = used < limit
 
     return NextResponse.json({
@@ -112,7 +123,7 @@ export async function GET() {
       remaining: Math.max(0, limit - used),
       used,
       limit,
-      subscription: userData.subscription_status,
+      subscription: activeSubscription,
       resetDate: userData.monthly_reset_date
     })
 

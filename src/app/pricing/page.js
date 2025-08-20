@@ -48,7 +48,7 @@ export default function Pricing() {
         'Email support'
       ],
       cta: 'Get Started',
-      priceId: 'price_starter',
+      priceId: 'price_1Ry9X88DXZKwTJPNFL09VJym', // Real Stripe price ID
       popular: true
     },
     {
@@ -64,7 +64,7 @@ export default function Pricing() {
         'Custom integrations'
       ],
       cta: 'Get Started',
-      priceId: 'price_growth'
+      priceId: 'price_1Ry9X98DXZKwTJPNxra81ItP' // Real Stripe price ID
     }
   ]
 
