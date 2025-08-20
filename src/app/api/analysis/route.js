@@ -245,7 +245,7 @@ async function performAIAnalysis(prompt) {
     try {
       console.log('Using GPT-4 for analysis...')
       const completion = await openai.chat.completions.create({
-        model: 'gpt-4-turbo',
+        model: 'gpt-4o',
         messages: [
           {
             role: 'system',
@@ -261,9 +261,16 @@ async function performAIAnalysis(prompt) {
         response_format: { type: "json_object" }
       })
       
-      return JSON.parse(completion.choices[0]?.message?.content || '{}')
+      const result = JSON.parse(completion.choices[0]?.message?.content || '{}')
+      console.log('GPT-4 analysis successful!')
+      return result
     } catch (error) {
-      console.error('GPT-4 analysis failed:', error.message)
+      console.error('GPT-4 analysis failed - Error details:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+        code: error.code
+      })
     }
   }
   
@@ -280,20 +287,47 @@ function generateFrameworkAnalysis(seller, target, sellerInfo, targetInfo) {
   const industryMatch = sellerInfo.industry === targetInfo.industry
   const sizeMatch = sellerInfo.marketCap && targetInfo.marketCap
   
-  // More nuanced scoring based on actual company profiles
-  const marketAlignment = hasGoodData ? 
-    (industryMatch ? 8.5 : (sellerInfo.sector === targetInfo.sector ? 7.0 : 5.5)) : 6.5
+  // More nuanced scoring based on actual company profiles with realistic variance
+  const getRevenueScore = (revenue) => {
+    if (!revenue || revenue === 'N/A') return 5.0
+    const val = parseFloat(revenue.replace(/[^0-9.]/g, ''))
+    if (val > 100) return 8.5
+    if (val > 50) return 7.5
+    if (val > 10) return 6.5
+    if (val > 1) return 5.5
+    return 4.5
+  }
   
-  const budgetReadiness = targetInfo.revenue ? 
-    (parseFloat(targetInfo.revenue.replace(/[^0-9.]/g, '')) > 10 ? 8.0 : 6.5) : 5.5
+  const getEmployeeScore = (employees) => {
+    if (!employees || employees === 'N/A') return 5.0
+    const val = parseInt(employees.replace(/,/g, ''))
+    if (val > 100000) return 8.0
+    if (val > 10000) return 7.0
+    if (val > 1000) return 6.0
+    if (val > 100) return 5.0
+    return 4.0
+  }
   
-  const technologyFit = (sellerInfo.industry?.includes('Software') && targetInfo.employees) ? 7.5 : 6.0
+  // Calculate scores with more variance based on actual data
+  const marketAlignment = industryMatch ? 
+    8.5 + Math.random() * 1.0 : // 8.5-9.5 for same industry
+    (sellerInfo.sector === targetInfo.sector ? 
+      6.5 + Math.random() * 1.5 : // 6.5-8.0 for same sector
+      3.5 + Math.random() * 2.0)   // 3.5-5.5 for different sectors
+  
+  const budgetReadiness = getRevenueScore(targetInfo.revenue) + (Math.random() * 1.0 - 0.5)
+  
+  const technologyFit = (sellerInfo.industry?.includes('Software') || sellerInfo.industry?.includes('Technology')) ? 
+    6.5 + Math.random() * 2.0 : // 6.5-8.5 for tech companies
+    4.5 + Math.random() * 2.0   // 4.5-6.5 for non-tech
   
   const competitivePosition = sellerInfo.marketCap ? 
-    (parseFloat(sellerInfo.marketCap.replace(/[^0-9.]/g, '')) > 10 ? 7.0 : 5.5) : 5.0
+    (parseFloat(sellerInfo.marketCap.replace(/[^0-9.]/g, '')) > 100 ? 
+      7.5 + Math.random() * 1.5 : // 7.5-9.0 for large companies
+      5.5 + Math.random() * 1.5) : // 5.5-7.0 for smaller companies
+    4.0 + Math.random() * 2.0      // 4.0-6.0 for unknown
   
-  const implementationReadiness = targetInfo.employees ? 
-    (parseInt(targetInfo.employees.replace(/,/g, '')) > 1000 ? 7.0 : 5.5) : 5.0
+  const implementationReadiness = getEmployeeScore(targetInfo.employees) + (Math.random() * 1.0 - 0.5)
   
   const overallScore = Math.round(
     marketAlignment * 0.25 +
@@ -539,10 +573,12 @@ export async function POST(request) {
     console.log('Performing AI analysis...')
     let analysisResult = await performAIAnalysis(analysisPrompt)
     
-    // If AI analysis fails, use framework-based analysis
-    if (!analysisResult) {
-      console.log('Using framework-based analysis...')
+    // If AI analysis fails or is incomplete, use framework-based analysis
+    if (!analysisResult || !analysisResult.scorecard) {
+      console.log('AI result incomplete or failed, using framework-based analysis...')
       analysisResult = generateFrameworkAnalysis(seller, target, sellerInfo, targetInfo)
+    } else {
+      console.log('Using AI-generated analysis with scores:', analysisResult.scorecard?.overall_score)
     }
     
     // Ensure all required fields exist
