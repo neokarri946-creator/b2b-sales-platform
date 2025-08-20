@@ -42,6 +42,16 @@ export default function AnalysisReport({ analysis }) {
             <p className="text-sm opacity-80">
               Methodology: {analysis.analysis_methodology || 'Enhanced Solution Affinity Scorecard v3.0'}
             </p>
+            {analysis.data_freshness && (
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-sm opacity-90">
+                  {analysis.data_freshness.data_status || '🔄 Live Data'}
+                </span>
+                <span className="text-xs opacity-80">
+                  ({analysis.data_freshness.seller.news_count + analysis.data_freshness.target.news_count} fresh articles)
+                </span>
+              </div>
+            )}
           </div>
           <div className="text-right">
             <div className="text-5xl font-bold">
@@ -157,7 +167,11 @@ export default function AnalysisReport({ analysis }) {
                                       </a>
                                     </div>
                                     {source.trust_indicator && (
-                                      <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-medium">
+                                      <span className={`text-xs px-2 py-1 rounded font-medium ${
+                                        source.trust_indicator.includes('Fresh') ? 
+                                        'bg-blue-100 text-blue-700' : 
+                                        'bg-green-100 text-green-700'
+                                      }`}>
                                         {source.trust_indicator}
                                       </span>
                                     )}
@@ -186,6 +200,11 @@ export default function AnalysisReport({ analysis }) {
                                     <div className="mt-2 pt-2 border-t border-blue-200">
                                       <p className="text-xs text-gray-500 font-mono">
                                         {source.citation}
+                                        {source.freshness && (
+                                          <span className="ml-2 text-blue-600 font-sans font-medium">
+                                            • {source.freshness}
+                                          </span>
+                                        )}
                                       </p>
                                     </div>
                                   )}
