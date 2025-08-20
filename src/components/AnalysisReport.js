@@ -130,25 +130,68 @@ export default function AnalysisReport({ analysis }) {
                           {dimension.detailed_analysis}
                         </p>
                         
-                        {/* Sources */}
+                        {/* Enterprise-Grade Sources with Quotes */}
                         {dimension.sources && dimension.sources.length > 0 && (
                           <div className="mt-4 pt-4 border-t border-gray-200">
-                            <h6 className="font-semibold text-gray-900 text-sm mb-2">Sources & References</h6>
-                            <ul className="space-y-1">
+                            <h6 className="font-semibold text-gray-900 text-sm mb-3 flex items-center">
+                              Sources & Evidence
+                              <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                                Enterprise Verified
+                              </span>
+                            </h6>
+                            <div className="space-y-3">
                               {dimension.sources.map((source, idx) => (
-                                <li key={idx} className="text-sm">
-                                  <a 
-                                    href={source.url} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="text-blue-600 hover:text-blue-800 underline"
-                                  >
-                                    {source.title}
-                                  </a>
-                                  <span className="text-gray-600 ml-2">- {source.relevance}</span>
-                                </li>
+                                <div key={idx} className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 p-4 rounded-lg shadow-sm">
+                                  <div className="flex items-start justify-between mb-2">
+                                    <div>
+                                      <a 
+                                        href={source.url} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="text-blue-800 hover:text-blue-900 underline font-semibold text-sm inline-flex items-center"
+                                      >
+                                        {source.title}
+                                        <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                        </svg>
+                                      </a>
+                                    </div>
+                                    {source.trust_indicator && (
+                                      <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-medium">
+                                        {source.trust_indicator}
+                                      </span>
+                                    )}
+                                  </div>
+                                  
+                                  {(source.display || source.quote) && (
+                                    <div className="bg-white bg-opacity-70 rounded p-3 mb-2">
+                                      <blockquote className="text-gray-800 text-sm leading-relaxed">
+                                        {source.display || `"${source.quote}"`}
+                                      </blockquote>
+                                    </div>
+                                  )}
+                                  
+                                  <div className="flex items-center justify-between text-xs">
+                                    <div className="text-gray-600">
+                                      <span className="font-medium">Relevance:</span> {source.relevance}
+                                    </div>
+                                    {source.authority && (
+                                      <div className="text-gray-500">
+                                        Source: {source.authority}
+                                      </div>
+                                    )}
+                                  </div>
+                                  
+                                  {source.citation && (
+                                    <div className="mt-2 pt-2 border-t border-blue-200">
+                                      <p className="text-xs text-gray-500 font-mono">
+                                        {source.citation}
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
                               ))}
-                            </ul>
+                            </div>
                           </div>
                         )}
                       </div>

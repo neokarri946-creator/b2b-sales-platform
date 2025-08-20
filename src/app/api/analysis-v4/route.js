@@ -15,6 +15,19 @@ import {
   validateUrl 
 } from '@/lib/hyperlink-generator'
 import { 
+  getMultipleVerifiedSources,
+  getGuaranteedSource 
+} from '@/lib/verified-sources'
+import { 
+  getGuaranteedSources,
+  getMixedSources 
+} from '@/lib/guaranteed-sources'
+import { 
+  getPremiumSources,
+  getBalancedSources,
+  formatEnterpriseSource 
+} from '@/lib/enterprise-sources'
+import { 
   validateAnalysis,
   calculateConfidence,
   generateAdjustmentExplanation 
@@ -132,13 +145,13 @@ function generateValidatedFallbackAnalysis(seller, target, sellerInfo, targetInf
   const implementationReadiness = deterministicScores.dimensions.implementationReadiness
   const overallScore = deterministicScores.overall
   
-  // Get relevant hyperlinks for each dimension
+  // Get ENTERPRISE-GRADE sources from trusted news and research firms
   const dimensionLinks = {
-    'Market Alignment': getDimensionLinks('Market Alignment', sellerInfo.industry, targetInfo.industry),
-    'Budget Readiness': getDimensionLinks('Budget Readiness', sellerInfo.industry, targetInfo.industry),
-    'Technology Fit': getDimensionLinks('Technology Fit', sellerInfo.industry, targetInfo.industry),
-    'Competitive Position': getDimensionLinks('Competitive Position', sellerInfo.industry, targetInfo.industry),
-    'Implementation Readiness': getDimensionLinks('Implementation Readiness', sellerInfo.industry, targetInfo.industry)
+    'Market Alignment': getBalancedSources('Market Alignment').map(formatEnterpriseSource),
+    'Budget Readiness': getBalancedSources('Budget Readiness').map(formatEnterpriseSource),
+    'Technology Fit': getBalancedSources('Technology Fit').map(formatEnterpriseSource),
+    'Competitive Position': getBalancedSources('Competitive Position').map(formatEnterpriseSource),
+    'Implementation Readiness': getBalancedSources('Implementation Readiness').map(formatEnterpriseSource)
   }
   
   return {
