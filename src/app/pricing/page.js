@@ -88,14 +88,20 @@ export default function Pricing() {
         body: JSON.stringify({ priceId })
       })
       
-      const { url } = await response.json()
+      const data = await response.json()
       
-      if (url) {
-        window.location.href = url
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create checkout session')
+      }
+      
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        throw new Error('No checkout URL received')
       }
     } catch (error) {
-      toast.error('Something went wrong')
-      console.error(error)
+      toast.error(error.message || 'Something went wrong')
+      console.error('Checkout error:', error)
     } finally {
       setLoading('')
     }

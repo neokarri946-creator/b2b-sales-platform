@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Checkout</title>
+</head>
+<body>
+    <h1>Debug Checkout API</h1>
+    <button onclick="testCheckout()">Test Checkout API</button>
+    
+    <div id="result"></div>
+
+    <script>
+        async function testCheckout() {
+            try {
+                const response = await fetch('https://b2b-sales-platform.vercel.app/api/create-checkout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        priceId: 'price_1Ry9X88DXZKwTJPNFL09VJym'
+                    })
+                });
+
+                const data = await response.json();
+                
+                document.getElementById('result').innerHTML = `
+                    <pre>
+Status: ${response.status}
+Response: ${JSON.stringify(data, null, 2)}
+                    </pre>
+                `;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
