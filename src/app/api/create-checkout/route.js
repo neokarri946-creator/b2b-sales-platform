@@ -3,8 +3,14 @@ import Stripe from 'stripe'
 import { currentUser } from '@clerk/nextjs/server'
 
 // Initialize Stripe with the secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_51RxTkk8DXZKwTJPNjz93dPNSomkzOvRUbLcJsLIhWq3jvS5k28Yh5YLYLT07KHfGQTBEd9heF7vaPcRaxXcGFWOY00Kw5q9JFA', {
-  apiVersion: '2023-10-16'
+const stripeKey = process.env.STRIPE_SECRET_KEY || 'sk_test_51RxTkk8DXZKwTJPNjz93dPNSomkzOvRUbLcJsLIhWq3jvS5k28Yh5YLYLT07KHfGQTBEd9heF7vaPcRaxXcGFWOY00Kw5q9JFA'
+console.log('Stripe key exists:', !!stripeKey)
+console.log('Stripe key starts with:', stripeKey.substring(0, 15))
+
+const stripe = new Stripe(stripeKey, {
+  apiVersion: '2023-10-16',
+  maxNetworkRetries: 3,
+  timeout: 10000 // 10 second timeout
 })
 
 export async function POST(request) {
