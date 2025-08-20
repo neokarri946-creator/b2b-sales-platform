@@ -83,20 +83,11 @@ export async function GET() {
       }
     }
 
-    // Special unlimited access for specific account
-    const userEmail = user.emailAddresses[0]?.emailAddress || ''
+    // Get used count
     const used = userData.monthly_analyses_used || 0
     
-    if (userEmail === 'neo.kar@icloud.com') {
-      return NextResponse.json({
-        canAnalyze: true,
-        remaining: 999999,
-        used,
-        limit: 999999,
-        subscription: 'unlimited_dev',
-        resetDate: userData.monthly_reset_date
-      })
-    }
+    // Special unlimited access for specific account (only if not a paid subscriber)
+    const userEmail = user.emailAddresses[0]?.emailAddress || ''
 
     // Check for active Stripe subscription (in addition to database status)
     const { data: subscription } = await supabase
@@ -106,7 +97,19 @@ export async function GET() {
       .single()
 
     // Use subscription from user_subscriptions table if it exists and is active
-    const activeSubscription = subscription?.status === 'active' ? subscription.plan : userData.subscription_status
+    let activeSubscription = subscription?.status === 'active' ? subscription.plan : userData.subscription_status
+
+    // Special case for neo.kar@icloud.com - only give unlimited if no paid subscription
+    if (userEmail === 'neo.kar@icloud.com' && activeSubscription === 'free') {
+      return NextResponse.json({
+        canAnalyze: true,
+        remaining: 999999,
+        used,
+        limit: 999999,
+        subscription: 'unlimited_dev',
+        resetDate: userData.monthly_reset_date
+      })
+    }
 
     // Determine limits based on subscription
     const limits = {

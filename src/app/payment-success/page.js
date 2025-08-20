@@ -14,20 +14,39 @@ function PaymentSuccessContent() {
   useEffect(() => {
     const sessionId = searchParams.get('session_id')
     
-    if (sessionId) {
-      // In production, you would verify the session with your backend
-      // For now, we'll just show a success message
-      setTimeout(() => {
-        setLoading(false)
-        setSessionData({
-          success: true,
-          plan: 'Starter' // This would come from the session verification
-        })
-      }, 1500)
-    } else {
+    if (sessionId && user) {
+      // Update the subscription in the database
+      updateSubscription(sessionId)
+    } else if (!sessionId) {
       setLoading(false)
     }
-  }, [searchParams])
+  }, [searchParams, user])
+
+  const updateSubscription = async (sessionId) => {
+    try {
+      const response = await fetch('/api/update-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId })
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        setSessionData({
+          success: true,
+          plan: data.plan
+        })
+        console.log('Subscription updated:', data.message)
+      } else {
+        console.error('Failed to update subscription')
+      }
+    } catch (error) {
+      console.error('Error updating subscription:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   if (loading) {
     return (
