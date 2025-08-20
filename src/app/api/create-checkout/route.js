@@ -2,17 +2,6 @@ import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { currentUser } from '@clerk/nextjs/server'
 
-// Initialize Stripe with the secret key
-const stripeKey = process.env.STRIPE_SECRET_KEY || 'sk_test_51RxTkk8DXZKwTJPNjz93dPNSomkzOvRUbLcJsLIhWq3jvS5k28Yh5YLYLT07KHfGQTBEd9heF7vaPcRaxXcGFWOY00Kw5q9JFA'
-console.log('Stripe key exists:', !!stripeKey)
-console.log('Stripe key starts with:', stripeKey.substring(0, 15))
-
-const stripe = new Stripe(stripeKey, {
-  apiVersion: '2023-10-16',
-  maxNetworkRetries: 3,
-  timeout: 10000 // 10 second timeout
-})
-
 export async function POST(request) {
   try {
     console.log('Checkout API called')
@@ -33,6 +22,16 @@ export async function POST(request) {
     }
 
     console.log('Creating checkout for price:', priceId)
+    
+    // Initialize Stripe inside the function
+    const stripeKey = process.env.STRIPE_SECRET_KEY || 'sk_test_51RxTkk8DXZKwTJPNjz93dPNSomkzOvRUbLcJsLIhWq3jvS5k28Yh5YLYLT07KHfGQTBEd9heF7vaPcRaxXcGFWOY00Kw5q9JFA'
+    console.log('Initializing Stripe with key starting:', stripeKey.substring(0, 20))
+    
+    const stripe = new Stripe(stripeKey, {
+      apiVersion: '2023-10-16',
+      httpClient: Stripe.createFetchHttpClient(), // Use fetch instead of default
+      maxNetworkRetries: 2
+    })
 
     // Get the base URL for redirects
     const baseUrl = process.env.NEXT_PUBLIC_URL || 
