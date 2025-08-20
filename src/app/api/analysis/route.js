@@ -308,34 +308,37 @@ function generateFrameworkAnalysis(seller, target, sellerInfo, targetInfo) {
     return 4.0
   }
   
-  // Calculate scores with more variance based on actual data
-  const marketAlignment = industryMatch ? 
+  // Calculate scores with more variance based on actual data - rounded to 1 decimal place
+  const marketAlignment = parseFloat((industryMatch ? 
     8.5 + Math.random() * 1.0 : // 8.5-9.5 for same industry
     (sellerInfo.sector === targetInfo.sector ? 
       6.5 + Math.random() * 1.5 : // 6.5-8.0 for same sector
       3.5 + Math.random() * 2.0)   // 3.5-5.5 for different sectors
+  ).toFixed(1))
   
-  const budgetReadiness = getRevenueScore(targetInfo.revenue) + (Math.random() * 1.0 - 0.5)
+  const budgetReadiness = parseFloat((getRevenueScore(targetInfo.revenue) + (Math.random() * 1.0 - 0.5)).toFixed(1))
   
-  const technologyFit = (sellerInfo.industry?.includes('Software') || sellerInfo.industry?.includes('Technology')) ? 
+  const technologyFit = parseFloat(((sellerInfo.industry?.includes('Software') || sellerInfo.industry?.includes('Technology')) ? 
     6.5 + Math.random() * 2.0 : // 6.5-8.5 for tech companies
     4.5 + Math.random() * 2.0   // 4.5-6.5 for non-tech
+  ).toFixed(1))
   
-  const competitivePosition = sellerInfo.marketCap ? 
+  const competitivePosition = parseFloat((sellerInfo.marketCap ? 
     (parseFloat(sellerInfo.marketCap.replace(/[^0-9.]/g, '')) > 100 ? 
       7.5 + Math.random() * 1.5 : // 7.5-9.0 for large companies
       5.5 + Math.random() * 1.5) : // 5.5-7.0 for smaller companies
     4.0 + Math.random() * 2.0      // 4.0-6.0 for unknown
+  ).toFixed(1))
   
-  const implementationReadiness = getEmployeeScore(targetInfo.employees) + (Math.random() * 1.0 - 0.5)
+  const implementationReadiness = parseFloat((getEmployeeScore(targetInfo.employees) + (Math.random() * 1.0 - 0.5)).toFixed(1))
   
   const overallScore = Math.round(
-    marketAlignment * 0.25 +
+    (marketAlignment * 0.25 +
     budgetReadiness * 0.20 +
     technologyFit * 0.20 +
     competitivePosition * 0.20 +
-    implementationReadiness * 0.15
-  ) * 10
+    implementationReadiness * 0.15) * 10
+  )
   
   return {
     scorecard: {

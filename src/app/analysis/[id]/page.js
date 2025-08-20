@@ -254,7 +254,7 @@ export default function AnalysisResults() {
                   <p className="text-sm text-gray-700">Weighted average across all dimensions</p>
                 </div>
                 <div className="text-4xl font-bold text-blue-600">
-                  {overallScore}%
+                  {Math.round(overallScore)}%
                 </div>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-4">
@@ -284,7 +284,7 @@ export default function AnalysisResults() {
                       <p className="text-sm text-gray-700 mt-1">{dimension.rationale}</p>
                     </div>
                     <div className="ml-4 text-2xl font-bold text-gray-900">
-                      {dimension.score}/10
+                      {Number(dimension.score).toFixed(1)}/10
                     </div>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
@@ -443,7 +443,7 @@ export default function AnalysisResults() {
                   <div key={index} className="border-l-4 border-blue-500 pl-4">
                     <div className="flex justify-between items-center mb-2">
                       <h5 className="font-semibold text-gray-900">{dimension.dimension}</h5>
-                      <span className="text-lg font-bold text-blue-600">{dimension.score}/10</span>
+                      <span className="text-lg font-bold text-blue-600">{Number(dimension.score).toFixed(1)}/10</span>
                     </div>
                     
                     <p className="text-gray-900 mb-3">{dimension.reasoning}</p>
