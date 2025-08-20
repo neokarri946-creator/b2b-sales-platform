@@ -31,6 +31,12 @@ import {
   getCombinedSources,
   formatFreshSource
 } from '@/lib/dynamic-sources'
+import {
+  getRealCompanySources,
+  getCompanyFinancialUrls,
+  getCompanyStatistics,
+  formatRealSource
+} from '@/lib/real-company-sources'
 import { 
   validateAnalysis,
   calculateConfidence,
@@ -448,7 +454,28 @@ export async function POST(request) {
       )
     }
 
-    console.log(`🔍 Analyzing: ${seller} → ${target}`)
+    console.log(`🔍 Starting comprehensive analysis: ${seller} → ${target}`)
+    
+    // Step 1: Conduct deep research on both companies
+    console.log('🔬 Phase 1: Researching companies and gathering data...')
+    const baseUrl = request?.headers?.get('host') || 'localhost:3000'
+    const protocol = request?.headers?.get('x-forwarded-proto') || 'http'
+    
+    let researchData = null
+    try {
+      const researchResponse = await fetch(`${protocol}://${baseUrl}/api/research-companies`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ seller, target })
+      })
+      
+      if (researchResponse.ok) {
+        researchData = await researchResponse.json()
+        console.log(`📚 Research complete: ${researchData.seller.sources.length + researchData.target.sources.length} sources analyzed`)
+      }
+    } catch (error) {
+      console.log('Research API error:', error)
+    }
     
     // Step 1: Gather company intelligence
     const [sellerInfo, targetInfo] = await Promise.all([
