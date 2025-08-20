@@ -1,26 +1,54 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useUser } from '@clerk/nextjs'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import toast, { Toaster } from 'react-hot-toast'
 import Navigation from '@/components/Navigation'
 
-export default function Pricing() {
+function PricingContent() {
   const { user } = useUser()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [loading, setLoading] = useState('')
   const [currentPlan, setCurrentPlan] = useState('free') // Default to free plan
+  const [loadingPlan, setLoadingPlan] = useState(true)
 
   // Get user's current plan when component mounts
   useEffect(() => {
     if (user) {
-      // In a real app, you'd fetch this from your subscription service
-      // For now, we'll assume all logged-in users are on the free plan
-      // TODO: Fetch actual subscription status from Stripe/Supabase
-      setCurrentPlan('free')
+      fetchCurrentPlan()
+    } else {
+      setLoadingPlan(false)
     }
-  }, [user])
+    
+    // Check if coming back from payment
+    if (searchParams.get('refresh') === 'true' && user) {
+      setTimeout(() => {
+        fetchCurrentPlan()
+      }, 1000) // Give database time to update
+    }
+  }, [user, searchParams])
+
+  const fetchCurrentPlan = async () => {
+    try {
+      const response = await fetch('/api/check-usage')
+      const data = await response.json()
+      
+      if (data.subscription) {
+        // Convert subscription name to match plan names
+        if (data.subscription === 'unlimited_dev') {
+          setCurrentPlan('free') // Show as free for unlimited dev
+        } else {
+          setCurrentPlan(data.subscription)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching plan:', error)
+    } finally {
+      setLoadingPlan(false)
+    }
+  }
 
   const plans = [
     {
@@ -157,7 +185,12 @@ export default function Pricing() {
                   ))}
                 </ul>
                 
-{user && currentPlan.toLowerCase() === plan.name.toLowerCase() ? (
+{loadingPlan && user ? (
+                  // Show loading state while fetching plan
+                  <div className="w-full py-3 rounded-lg font-semibold text-center bg-gray-100 text-gray-600">
+                    <div className="animate-pulse">Loading...</div>
+                  </div>
+                ) : user && currentPlan.toLowerCase() === plan.name.toLowerCase() ? (
                   // Show current plan status
                   <div className="w-full py-3 rounded-lg font-semibold text-center bg-green-100 text-green-800 border-2 border-green-200">
                     ✓ Current Plan
@@ -222,5 +255,17 @@ export default function Pricing() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function Pricing() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    }>
+      <PricingContent />
+    </Suspense>
   )
 }

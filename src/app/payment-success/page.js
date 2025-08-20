@@ -107,10 +107,10 @@ function PaymentSuccessContent() {
             </button>
             
             <button
-              onClick={() => router.push('/dashboard')}
+              onClick={() => router.push('/pricing?refresh=true')}
               className="w-full bg-gray-100 text-gray-900 py-3 rounded-lg font-semibold hover:bg-gray-200"
             >
-              Go to Dashboard
+              View Your Plan
             </button>
           </div>
 
