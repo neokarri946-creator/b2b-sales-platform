@@ -19,6 +19,7 @@ import {
   calculateConfidence,
   generateAdjustmentExplanation 
 } from '@/lib/score-validator'
+import { getDeterministicScores } from '@/lib/deterministic-scorer'
 
 // Initialize Supabase
 const supabase = createClient(
@@ -119,22 +120,17 @@ Return as detailed JSON with all required fields.`
 // Generate validated fallback analysis
 function generateValidatedFallbackAnalysis(seller, target, sellerInfo, targetInfo, compatibility) {
   const isIncompatible = compatibility.verdict === 'INCOMPATIBLE'
-  const baseMultiplier = compatibility.score
   
-  // Generate appropriate scores based on compatibility
-  const marketAlignment = isIncompatible ? 1.5 : 5 + (Math.random() * 3) * baseMultiplier
-  const budgetReadiness = isIncompatible ? 2.0 : 5 + (Math.random() * 3) * baseMultiplier
-  const technologyFit = isIncompatible ? 1.8 : 5 + (Math.random() * 3) * baseMultiplier
-  const competitivePosition = isIncompatible ? 1.2 : 4 + (Math.random() * 3) * baseMultiplier
-  const implementationReadiness = isIncompatible ? 1.5 : 5 + (Math.random() * 3) * baseMultiplier
+  // Use deterministic scoring instead of random
+  const deterministicScores = getDeterministicScores(seller, target, compatibility)
   
-  const overallScore = Math.round(
-    (marketAlignment * 0.25 +
-    budgetReadiness * 0.20 +
-    technologyFit * 0.20 +
-    competitivePosition * 0.20 +
-    implementationReadiness * 0.15) * 10
-  )
+  // Extract individual scores
+  const marketAlignment = deterministicScores.dimensions.marketAlignment
+  const budgetReadiness = deterministicScores.dimensions.budgetReadiness
+  const technologyFit = deterministicScores.dimensions.technologyFit
+  const competitivePosition = deterministicScores.dimensions.competitivePosition
+  const implementationReadiness = deterministicScores.dimensions.implementationReadiness
+  const overallScore = deterministicScores.overall
   
   // Get relevant hyperlinks for each dimension
   const dimensionLinks = {
