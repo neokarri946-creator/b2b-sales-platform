@@ -70,7 +70,7 @@ function PaymentSuccessContent() {
           </p>
 
           <div className="bg-blue-50 rounded-lg p-4 mb-6">
-            <h3 className="font-semibold text-blue-900 mb-2">What's Next?</h3>
+            <h3 className="font-semibold text-blue-900 mb-2">What&apos;s Next?</h3>
             <ul className="text-sm text-blue-800 space-y-1 text-left">
               <li>• Your plan is now active</li>
               <li>• You can start running analyses immediately</li>
