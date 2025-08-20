@@ -96,14 +96,17 @@ function PricingContent() {
     }
   ]
 
-  const handleSubscribe = async (priceId) => {
+  const handleSubscribe = async (priceId, planName) => {
     if (!user) {
       router.push('/sign-up')
       return
     }
 
     if (!priceId) {
-      router.push('/analysis/new')
+      // Free plan - only go to analysis if not currently on a paid plan
+      if (currentPlan === 'free') {
+        router.push('/analysis/new')
+      }
       return
     }
 
@@ -130,6 +133,47 @@ function PricingContent() {
     } catch (error) {
       toast.error(error.message || 'Something went wrong')
       console.error('Checkout error:', error)
+    } finally {
+      setLoading('')
+    }
+  }
+
+  const handleCancelPlan = async () => {
+    const confirmMessage = 'Are you sure you want to cancel your subscription? You will lose access to premium features and be reverted to the Free plan.'
+    
+    if (!confirm(confirmMessage)) {
+      return
+    }
+
+    setLoading('cancel')
+    
+    try {
+      const response = await fetch('/api/manage-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'cancel',
+          targetPlan: 'free',
+          currentPlan
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to cancel subscription')
+      }
+      
+      toast.success('Successfully cancelled subscription. You have been reverted to the Free plan.')
+      
+      // Refresh the page to show updated plan
+      setTimeout(() => {
+        window.location.reload()
+      }, 2000)
+      
+    } catch (error) {
+      toast.error(error.message || 'Something went wrong')
+      console.error('Cancel error:', error)
     } finally {
       setLoading('')
     }
@@ -190,15 +234,24 @@ function PricingContent() {
                   <div className="w-full py-3 rounded-lg font-semibold text-center bg-gray-100 text-gray-600">
                     <div className="animate-pulse">Loading...</div>
                   </div>
-                ) : user && currentPlan.toLowerCase() === plan.name.toLowerCase() ? (
-                  // Show current plan status
+                ) : user && currentPlan.toLowerCase() === plan.name.toLowerCase() && plan.name !== 'Free' ? (
+                  // Show cancel button for current paid plan
+                  <button
+                    onClick={handleCancelPlan}
+                    disabled={loading === 'cancel'}
+                    className="w-full py-3 rounded-lg font-semibold bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {loading === 'cancel' ? 'Cancelling...' : 'Cancel Plan'}
+                  </button>
+                ) : user && currentPlan.toLowerCase() === plan.name.toLowerCase() && plan.name === 'Free' ? (
+                  // Show current plan for free tier
                   <div className="w-full py-3 rounded-lg font-semibold text-center bg-green-100 text-green-800 border-2 border-green-200">
                     ✓ Current Plan
                   </div>
                 ) : (
                   <button
-                    onClick={() => plan.name === 'Free' && !user ? router.push('/sign-up') : handleSubscribe(plan.priceId)}
-                    disabled={loading === plan.priceId || (!user && plan.name !== 'Free')}
+                    onClick={() => plan.name === 'Free' && !user ? router.push('/sign-up') : handleSubscribe(plan.priceId, plan.name)}
+                    disabled={loading === plan.priceId || loading === 'cancel' || (!user && plan.name !== 'Free')}
                     className={`w-full py-3 rounded-lg font-semibold ${
                       plan.popular
                         ? 'bg-blue-600 text-white hover:bg-blue-700'
@@ -209,7 +262,7 @@ function PricingContent() {
                       !user && plan.name !== 'Free' ? 'cursor-not-allowed' : ''
                     }`}
                   >
-                    {loading === plan.priceId 
+                    {loading === plan.priceId
                       ? 'Loading...' 
                       : !user && plan.name === 'Free' 
                       ? 'Sign Up Free'
