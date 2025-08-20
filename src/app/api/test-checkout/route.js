@@ -1,32 +1,18 @@
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { currentUser } from '@clerk/nextjs/server'
 
 // Initialize Stripe with the secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_51RxTkk8DXZKwTJPNjz93dPNSomkzOvRUbLcJsLIhWq3jvS5k28Yh5YLYLT07KHfGQTBEd9heF7vaPcRaxXcGFWOY00Kw5q9JFA', {
   apiVersion: '2023-10-16'
 })
 
-export async function POST(request) {
+export async function GET() {
   try {
-    console.log('Checkout API called')
-    const user = await currentUser()
+    console.log('Test checkout API called')
     
-    if (!user) {
-      console.log('No user found - unauthorized')
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    console.log('User authenticated:', user.emailAddresses[0].emailAddress)
-
-    const { priceId } = await request.json()
+    const priceId = 'price_1Ry9X88DXZKwTJPNFL09VJym' // Starter plan
     
-    if (!priceId) {
-      console.log('No price ID provided')
-      return NextResponse.json({ error: 'Price ID is required' }, { status: 400 })
-    }
-
-    console.log('Creating checkout for price:', priceId)
+    console.log('Creating test checkout for price:', priceId)
 
     // Get the base URL for redirects
     const baseUrl = process.env.NEXT_PUBLIC_URL || 
@@ -46,15 +32,15 @@ export async function POST(request) {
       mode: 'subscription',
       success_url: `${baseUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/pricing?canceled=true`,
-      customer_email: user.emailAddresses[0].emailAddress,
+      customer_email: 'test@example.com',
       metadata: {
-        userId: user.id,
-        userEmail: user.emailAddresses[0].emailAddress
+        userId: 'test_user',
+        userEmail: 'test@example.com'
       },
       subscription_data: {
         metadata: {
-          userId: user.id,
-          userEmail: user.emailAddresses[0].emailAddress
+          userId: 'test_user',
+          userEmail: 'test@example.com'
         }
       },
       allow_promotion_codes: true,
@@ -64,23 +50,22 @@ export async function POST(request) {
     console.log('Checkout session created:', session.id)
     console.log('Checkout URL:', session.url)
     
-    return NextResponse.json({ url: session.url })
+    return NextResponse.json({ 
+      success: true,
+      url: session.url,
+      sessionId: session.id 
+    })
   } catch (error) {
     console.error('Stripe error:', error)
     console.error('Error type:', error.type)
     console.error('Error message:', error.message)
-    console.error('Full error:', JSON.stringify(error, null, 2))
-    
-    // More detailed error messages
-    if (error.type === 'StripeInvalidRequestError') {
-      return NextResponse.json(
-        { error: `Invalid request: ${error.message}` },
-        { status: 400 }
-      )
-    }
     
     return NextResponse.json(
-      { error: error.message || 'Failed to create checkout session. Please try again.' },
+      { 
+        error: error.message,
+        type: error.type,
+        details: error.raw?.message || error.message
+      },
       { status: 500 }
     )
   }
