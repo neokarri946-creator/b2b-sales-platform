@@ -81,7 +81,7 @@ export default function NewAnalysis() {
     }, 1000)
     
     try {
-      const response = await fetch('/api/analysis-v3', {
+      const response = await fetch('/api/analysis-v4', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
