@@ -215,7 +215,7 @@ export default function NewAnalysis() {
                 {usageData && !usageData.canAnalyze && (
                   <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
                     <p className="text-yellow-800 dark:text-yellow-200">
-                      You've reached your monthly analysis limit. Please upgrade your plan to continue.
+                      You&apos;ve reached your monthly analysis limit. Please upgrade your plan to continue.
                     </p>
                   </div>
                 )}
