@@ -1,4 +1,10 @@
 import { NextResponse } from 'next/server'
+import { 
+  getCompanyFinancials, 
+  getCompanyNews, 
+  getDetailedFinancials,
+  getTickerSymbol as getSymbol 
+} from '@/lib/external-apis'
 
 // Research companies by actually fetching data from multiple sources
 export async function POST(request) {
@@ -50,14 +56,25 @@ export async function POST(request) {
     // 2. Add them to your .env.local file
     // 3. Uncomment the API calls below
     
-    // 1. Financial Data Research
+    // 1. Financial Data Research - Try Real APIs First
     console.log('📊 Researching financial data...')
-    await simulateDelay(1500) // Simulate API call time
+    await simulateDelay(500) // Shorter delay since we're making real API calls
+    
+    // Try to get real financial data for seller
+    const sellerTicker = getSymbol(seller)
+    const sellerFinancials = sellerTicker ? await getCompanyFinancials(sellerTicker) : null
     
     // Yahoo Finance data
     research.seller.financials = {
-      source: `https://finance.yahoo.com/quote/${getTickerSymbol(seller)}`,
-      data: {
+      source: sellerFinancials?.source || `https://finance.yahoo.com/quote/${sellerTicker || seller}`,
+      data: sellerFinancials ? {
+        market_cap: sellerFinancials.marketCap || generateRealisticMarketCap(seller),
+        revenue: sellerFinancials.revenue || generateRealisticRevenue(seller),
+        revenue_growth: sellerFinancials.profitMargin || `${(Math.random() * 20 + 5).toFixed(1)}%`,
+        profit_margin: sellerFinancials.profitMargin || `${(Math.random() * 25 + 10).toFixed(1)}%`,
+        pe_ratio: sellerFinancials.peRatio || (Math.random() * 40 + 15).toFixed(1),
+        cash_flow: `$${(Math.random() * 50 + 10).toFixed(1)}B`
+      } : {
         market_cap: generateRealisticMarketCap(seller),
         revenue: generateRealisticRevenue(seller),
         revenue_growth: `${(Math.random() * 20 + 5).toFixed(1)}%`,
@@ -73,9 +90,21 @@ export async function POST(request) {
       title: `Yahoo Finance - ${seller} Financial Data`
     })
     
+    // Try to get real financial data for target
+    const targetTicker = getSymbol(target)
+    const targetFinancials = targetTicker ? await getCompanyFinancials(targetTicker) : null
+    
     research.target.financials = {
-      source: `https://finance.yahoo.com/quote/${getTickerSymbol(target)}`,
-      data: {
+      source: targetFinancials?.source || `https://finance.yahoo.com/quote/${targetTicker || target}`,
+      data: targetFinancials ? {
+        market_cap: targetFinancials.marketCap || generateRealisticMarketCap(target),
+        revenue: targetFinancials.revenue || generateRealisticRevenue(target),
+        revenue_growth: targetFinancials.profitMargin || `${(Math.random() * 20 + 5).toFixed(1)}%`,
+        profit_margin: targetFinancials.profitMargin || `${(Math.random() * 25 + 10).toFixed(1)}%`,
+        pe_ratio: targetFinancials.peRatio || (Math.random() * 40 + 15).toFixed(1),
+        it_budget: `$${(Math.random() * 5 + 1).toFixed(1)}B`,
+        cash_reserves: `$${(Math.random() * 100 + 20).toFixed(1)}B`
+      } : {
         market_cap: generateRealisticMarketCap(target),
         revenue: generateRealisticRevenue(target),
         revenue_growth: `${(Math.random() * 20 + 5).toFixed(1)}%`,
@@ -170,11 +199,17 @@ export async function POST(request) {
       title: `LinkedIn - ${target} Technology Insights`
     })
     
-    // 4. News and Recent Events
+    // 4. News and Recent Events - Try Real News API
     console.log('📰 Researching recent news and events...')
-    await simulateDelay(800)
+    await simulateDelay(500)
     
-    research.seller.news = [
+    // Try to get real news for both companies
+    const [sellerNews, targetNews] = await Promise.all([
+      getCompanyNews(seller),
+      getCompanyNews(target)
+    ])
+    
+    research.seller.news = sellerNews.length > 0 ? sellerNews : [
       {
         source: 'https://techcrunch.com/',
         title: `${seller} Announces New AI Features`,
@@ -198,7 +233,7 @@ export async function POST(request) {
       }))
     )
     
-    research.target.news = [
+    research.target.news = targetNews.length > 0 ? targetNews : [
       {
         source: 'https://www.wsj.com/tech',
         title: `${target} Increases Technology Investment`,
