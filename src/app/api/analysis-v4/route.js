@@ -425,6 +425,9 @@ export async function POST(request) {
 
     console.log(`🔍 Starting comprehensive analysis: ${seller} → ${target}`)
     
+    // Add timeout tracking
+    const analysisStartTime = Date.now()
+    
     // Step 1: Conduct deep research on both companies
     console.log('🔬 Phase 1: Researching companies and gathering data...')
     const baseUrl = request?.headers?.get('host') || 'localhost:3000'
@@ -484,13 +487,7 @@ export async function POST(request) {
         
         console.log(`📊 Final score: ${researchBasedAnalysis.success_probability}%`)
         console.log(`🔗 Linked ${evidenceBasedAnalysis.scorecard.dimensions.reduce((sum, d) => sum + d.sources.length, 0)} exact sources`)
-      } else {
-        const errorText = await researchResponse.text()
-        console.error(`Research API failed with status ${researchResponse.status}: ${errorText}`)
       }
-    } catch (error) {
-      console.error('Research API error:', error)
-      console.error('Research API error details:', error.message)
     }
     
     // Step 1: Gather company intelligence
@@ -505,8 +502,12 @@ export async function POST(request) {
     
     let analysis = null
     
+    // Skip AI analysis if we're running low on time (< 3 seconds left)
+    const timeElapsed = Date.now() - analysisStartTime
+    const skipAI = timeElapsed > 7000 // Skip if we've already used 7+ seconds
+    
     // Step 3: Try AI analysis with ultra-strict prompting
-    if (anthropic) {
+    if (anthropic && !skipAI) {
       try {
         console.log('🤖 Attempting Claude analysis...')
         const prompt = generateUltraStrictPrompt(seller, target, sellerInfo, targetInfo, compatibility)
@@ -531,8 +532,9 @@ export async function POST(request) {
       }
     }
     
-    // Step 4: Try OpenAI if Claude fails
-    if (!analysis && openai) {
+    // Step 4: Try OpenAI if Claude fails (and we have time)
+    const timeRemaining = 10000 - (Date.now() - analysisStartTime)
+    if (!analysis && openai && timeRemaining > 2000) {
       try {
         console.log('🤖 Attempting OpenAI analysis...')
         const prompt = generateUltraStrictPrompt(seller, target, sellerInfo, targetInfo, compatibility)
