@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>Testing Analysis API</h1>
+    <button onclick="testAPI()">Run Test Analysis</button>
+    <div id="results"></div>
+    
+    <script>
+    async function testAPI() {
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = 'Loading...';
+        
+        try {
+            const response = await fetch('/api/analysis-v4', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    seller: 'Google',
+                    target: 'Ford'
+                })
+            });
+            
+            const data = await response.json();
+            
+            // Extract all URLs
+            const urls = [];
+            data.scorecard.dimensions.forEach(dim => {
+                dim.sources?.forEach(source => {
+                    urls.push(source.url);
+                });
+            });
+            
+            resultsDiv.innerHTML = `
+                <h2>URLs Found (${urls.length} total):</h2>
+                <ul>
+                    ${urls.map(url => `<li><a href="${url}" target="_blank">${url}</a></li>`).join('')}
+                </ul>
+                <h2>Unique URLs:</h2>
+                <ul>
+                    ${[...new Set(urls)].map(url => `<li><a href="${url}" target="_blank">${url}</a></li>`).join('')}
+                </ul>
+            `;
+        } catch (error) {
+            resultsDiv.innerHTML = 'Error: ' + error.message;
+        }
+    }
+    </script>
+</body>
+</html>

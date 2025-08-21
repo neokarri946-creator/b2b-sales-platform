@@ -492,6 +492,13 @@ Resource availability analysis indicates ${target} can allocate the necessary pe
 }
 
 export async function POST(request) {
+  // REDIRECT TO V4 - Old version with fake URLs
+  return fetch(new URL('/api/analysis-v4', request.url).toString(), {
+    method: 'POST',
+    headers: request.headers,
+    body: await request.text()
+  })
+  /* DISABLED - Contains hardcoded fake URLs
   try {
     const user = await currentUser()
     const userId = user?.id

@@ -9,34 +9,8 @@ import {
   calculateCompatibility,
   generateWarnings 
 } from '@/lib/industry-classifier'
-import { 
-  generateHyperlinks,
-  getDimensionLinks,
-  validateUrl 
-} from '@/lib/hyperlink-generator'
-import { 
-  getMultipleVerifiedSources,
-  getGuaranteedSource 
-} from '@/lib/verified-sources'
-import { 
-  getGuaranteedSources,
-  getMixedSources 
-} from '@/lib/guaranteed-sources'
-import { 
-  getPremiumSources,
-  getBalancedSources,
-  formatEnterpriseSource 
-} from '@/lib/enterprise-sources'
-import {
-  getCombinedSources,
-  formatFreshSource
-} from '@/lib/dynamic-sources'
-import {
-  getRealCompanySources,
-  getCompanyFinancialUrls,
-  getCompanyStatistics,
-  formatRealSource
-} from '@/lib/real-company-sources'
+// REMOVED: All imports for hardcoded/fake source generators
+// We now ONLY use real research data from external APIs
 import { generateResearchBasedAnalysis } from '@/lib/research-based-analysis'
 import { generateEvidenceBasedAnalysis } from '@/lib/evidence-based-analysis'
 import { 
@@ -45,6 +19,7 @@ import {
   generateAdjustmentExplanation 
 } from '@/lib/score-validator'
 import { getDeterministicScores } from '@/lib/deterministic-scorer'
+import { calculateCompetitiveImpact } from '@/lib/competitor-detection'
 
 // Initialize Supabase
 const supabase = createClient(
@@ -193,22 +168,14 @@ function generateValidatedFallbackAnalysis(seller, target, sellerInfo, targetInf
   const implementationReadiness = deterministicScores.dimensions.implementationReadiness
   const overallScore = deterministicScores.overall
   
-  // Get DYNAMIC sources with fresh data for each dimension
-  const enterpriseSources = {
-    'Market Alignment': getBalancedSources('Market Alignment'),
-    'Budget Readiness': getBalancedSources('Budget Readiness'),
-    'Technology Fit': getBalancedSources('Technology Fit'),
-    'Competitive Position': getBalancedSources('Competitive Position'),
-    'Implementation Readiness': getBalancedSources('Implementation Readiness')
-  }
-  
-  // Generate dynamic sources based on fresh company data
+  // IMPORTANT: Only use empty sources for fallback - real sources come from research
+  // DO NOT use fake hardcoded sources anymore
   const dimensionLinks = {
-    'Market Alignment': getCombinedSources('Market Alignment', sellerInfo, targetInfo, enterpriseSources['Market Alignment']).map(formatFreshSource),
-    'Budget Readiness': getCombinedSources('Budget Readiness', sellerInfo, targetInfo, enterpriseSources['Budget Readiness']).map(formatFreshSource),
-    'Technology Fit': getCombinedSources('Technology Fit', sellerInfo, targetInfo, enterpriseSources['Technology Fit']).map(formatFreshSource),
-    'Competitive Position': getCombinedSources('Competitive Position', sellerInfo, targetInfo, enterpriseSources['Competitive Position']).map(formatFreshSource),
-    'Implementation Readiness': getCombinedSources('Implementation Readiness', sellerInfo, targetInfo, enterpriseSources['Implementation Readiness']).map(formatFreshSource)
+    'Market Alignment': [],
+    'Budget Readiness': [],
+    'Technology Fit': [],
+    'Competitive Position': [],
+    'Implementation Readiness': []
   }
   
   return {
@@ -465,6 +432,7 @@ export async function POST(request) {
     
     let researchData = null
     let researchBasedAnalysis = null
+    let competitiveImpact = null
     
     try {
       const researchResponse = await fetch(`${protocol}://${baseUrl}/api/research-companies`, {
@@ -476,6 +444,16 @@ export async function POST(request) {
       if (researchResponse.ok) {
         researchData = await researchResponse.json()
         console.log(`📚 Research complete: ${researchData.seller.sources.length + researchData.target.sources.length} sources analyzed`)
+        
+        // CRITICAL: Check for competitive relationship FIRST
+        console.log('🎯 Checking for competitive relationship...')
+        competitiveImpact = calculateCompetitiveImpact(seller, target, researchData)
+        
+        if (competitiveImpact.scoreReduction > 0) {
+          console.log(`⚠️ COMPETITION DETECTED: ${competitiveImpact.competitionType}`)
+          console.log(`📉 Score reduction: ${competitiveImpact.scoreReduction}%`)
+          console.log(`📋 Reasons: ${competitiveImpact.reasons.join(', ')}`)
+        }
         
         // Generate analysis based entirely on the research data
         console.log('🧮 Generating analysis from research data...')
@@ -489,7 +467,17 @@ export async function POST(request) {
         researchBasedAnalysis.dimensions = evidenceBasedAnalysis.scorecard.dimensions
         researchBasedAnalysis.success_probability = evidenceBasedAnalysis.scorecard.overall_score
         
-        console.log(`📊 Evidence-based score: ${researchBasedAnalysis.success_probability}%`)
+        // APPLY COMPETITIVE REDUCTION TO SCORE
+        if (competitiveImpact && competitiveImpact.scoreReduction > 0) {
+          const originalScore = researchBasedAnalysis.success_probability
+          researchBasedAnalysis.success_probability = Math.max(
+            5, // Minimum score
+            Math.round(originalScore * (100 - competitiveImpact.scoreReduction) / 100)
+          )
+          console.log(`🔻 Score adjusted from ${originalScore}% to ${researchBasedAnalysis.success_probability}% due to competition`)
+        }
+        
+        console.log(`📊 Final score: ${researchBasedAnalysis.success_probability}%`)
         console.log(`🔗 Linked ${evidenceBasedAnalysis.scorecard.dimensions.reduce((sum, d) => sum + d.sources.length, 0)} exact sources`)
       }
     } catch (error) {
@@ -572,7 +560,7 @@ export async function POST(request) {
         console.log('📈 Using research-based scores and evidence')
         analysis = generateValidatedFallbackAnalysis(seller, target, sellerInfo, targetInfo, compatibility)
         
-        // Override with research-based scores
+        // Override with research-based scores (already adjusted for competition)
         analysis.scorecard.overall_score = researchBasedAnalysis.success_probability
         
         // Replace dimensions with evidence-based ones that have REAL sources
@@ -581,15 +569,27 @@ export async function POST(request) {
             // Find the matching original dimension for structure
             const originalDim = analysis.scorecard.dimensions.find(d => d.name === researchDim.name) || {}
             
+            // Apply competitive reduction to dimension scores too
+            let dimensionScore = researchDim.score
+            if (competitiveImpact && competitiveImpact.scoreReduction > 0) {
+              dimensionScore = Math.max(1, dimensionScore * (100 - competitiveImpact.scoreReduction) / 100)
+            }
+            
             return {
               name: researchDim.name,
-              score: researchDim.score,
+              score: parseFloat(dimensionScore.toFixed(1)),
               weight: researchDim.weight,
               summary: researchDim.summary || originalDim.summary,
               detailed_analysis: researchDim.detailed_analysis || originalDim.detailed_analysis,
-              sources: researchDim.sources || [] // These are the ACTUAL sources with real URLs
+              sources: researchDim.sources || [] // ALWAYS use research sources, never fake ones
             }
           })
+        } else {
+          // If no research data, clear out any fake sources
+          analysis.scorecard.dimensions = analysis.scorecard.dimensions.map(dim => ({
+            ...dim,
+            sources: [] // No fake sources allowed
+          }))
         }
         
         // Add research evidence to the analysis
@@ -598,6 +598,40 @@ export async function POST(request) {
           news_articles: (researchData?.seller?.news?.length || 0) + (researchData?.target?.news?.length || 0),
           financial_data_points: researchBasedAnalysis.sources_used?.financial_sources?.length || 0,
           web_sources: researchBasedAnalysis.sources_used?.web_sources?.length || 0
+        }
+        
+        // Add competitive impact to the analysis if detected
+        if (competitiveImpact && competitiveImpact.scoreReduction > 0) {
+          analysis.competitive_analysis = {
+            status: competitiveImpact.competitionType,
+            impact: `${competitiveImpact.scoreReduction}% score reduction`,
+            reasons: competitiveImpact.reasons,
+            evidence: competitiveImpact.evidence,
+            recommendation: competitiveImpact.scoreReduction > 50 
+              ? 'NOT RECOMMENDED - Companies are competitors'
+              : 'PROCEED WITH EXTREME CAUTION - Competitive overlap detected'
+          }
+          
+          // Override challenges with competition-specific ones
+          analysis.challenges = [
+            {
+              risk: `Competitive relationship between ${seller} and ${target}`,
+              mitigation: competitiveImpact.scoreReduction > 50 
+                ? 'Partnership not viable due to competition'
+                : 'Requires careful structuring to avoid conflicts',
+              probability: 'Certain',
+              impact: 'Critical'
+            },
+            ...analysis.challenges || []
+          ]
+          
+          // Add warning to the recommendation
+          if (analysis.recommendation) {
+            analysis.recommendation.verdict = competitiveImpact.scoreReduction > 50 
+              ? 'DO NOT PROCEED - COMPETITORS'
+              : 'HIGH RISK - COMPETITIVE OVERLAP'
+            analysis.recommendation.rationale = `${competitiveImpact.reasons.join('. ')}. Original score reduced by ${competitiveImpact.scoreReduction}% due to competitive factors.`
+          }
         }
       } else {
         analysis = generateValidatedFallbackAnalysis(seller, target, sellerInfo, targetInfo, compatibility)
