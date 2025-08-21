@@ -38,6 +38,7 @@ import {
   formatRealSource
 } from '@/lib/real-company-sources'
 import { generateResearchBasedAnalysis } from '@/lib/research-based-analysis'
+import { generateEvidenceBasedAnalysis } from '@/lib/evidence-based-analysis'
 import { 
   validateAnalysis,
   calculateConfidence,
@@ -479,7 +480,17 @@ export async function POST(request) {
         // Generate analysis based entirely on the research data
         console.log('🧮 Generating analysis from research data...')
         researchBasedAnalysis = generateResearchBasedAnalysis(researchData)
-        console.log(`📊 Research-based score: ${researchBasedAnalysis.success_probability}%`)
+        
+        // Generate evidence-based analysis with exact source URLs
+        console.log('🔗 Linking every statement to its exact source...')
+        const evidenceBasedAnalysis = generateEvidenceBasedAnalysis(researchData)
+        
+        // Merge both analyses
+        researchBasedAnalysis.dimensions = evidenceBasedAnalysis.scorecard.dimensions
+        researchBasedAnalysis.success_probability = evidenceBasedAnalysis.scorecard.overall_score
+        
+        console.log(`📊 Evidence-based score: ${researchBasedAnalysis.success_probability}%`)
+        console.log(`🔗 Linked ${evidenceBasedAnalysis.scorecard.dimensions.reduce((sum, d) => sum + d.sources.length, 0)} exact sources`)
       }
     } catch (error) {
       console.log('Research API error:', error)
@@ -564,32 +575,22 @@ export async function POST(request) {
         // Override with research-based scores
         analysis.scorecard.overall_score = researchBasedAnalysis.success_probability
         
-        // Update dimension scores with research-based data
-        analysis.scorecard.dimensions.forEach(dim => {
-          const researchDim = researchBasedAnalysis.dimensions[dim.name.replace(' ', '')]
-          if (researchDim) {
-            dim.score = researchDim.score
+        // Replace dimensions with evidence-based ones that have REAL sources
+        if (researchBasedAnalysis.dimensions) {
+          analysis.scorecard.dimensions = researchBasedAnalysis.dimensions.map(researchDim => {
+            // Find the matching original dimension for structure
+            const originalDim = analysis.scorecard.dimensions.find(d => d.name === researchDim.name) || {}
             
-            // Add evidence-based explanation
-            if (researchDim.evidence && researchDim.evidence.length > 0) {
-              dim.detailed_analysis = `Based on analysis of ${researchDim.evidence.length} data points:\n\n` +
-                researchDim.evidence.map(e => `• ${e.data} (Source: ${e.source})`).join('\n') +
-                '\n\n' + dim.detailed_analysis
+            return {
+              name: researchDim.name,
+              score: researchDim.score,
+              weight: researchDim.weight,
+              summary: researchDim.summary || originalDim.summary,
+              detailed_analysis: researchDim.detailed_analysis || originalDim.detailed_analysis,
+              sources: researchDim.sources || [] // These are the ACTUAL sources with real URLs
             }
-            
-            // Use real sources
-            if (researchDim.sources && researchDim.sources.length > 0) {
-              dim.sources = researchDim.sources.slice(0, 3).map(s => ({
-                title: s.title || 'Research Finding',
-                url: s.url,
-                quote: s.snippet || s.title,
-                relevance: 'Direct research evidence',
-                authority: new URL(s.url).hostname,
-                trust_indicator: '✓ Verified Source'
-              }))
-            }
-          }
-        })
+          })
+        }
         
         // Add research evidence to the analysis
         analysis.research_evidence = {
