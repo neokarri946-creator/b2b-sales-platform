@@ -81,7 +81,45 @@ export default function NewAnalysis() {
     }, 2500) // Update every 2.5 seconds
     
     try {
-      // Try the new async endpoint that handles everything in one call
+      // First try the fast endpoint for immediate results
+      const fastResponse = await fetch('/api/analysis-fast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, includeResearch: true })
+      })
+      
+      if (fastResponse.ok) {
+        const data = await fastResponse.json()
+        
+        // Clear progress interval
+        clearInterval(progressInterval)
+        
+        // Analysis completed successfully
+        setAnalysisProgress(100)
+        setAnalysisStage('Analysis complete!')
+        
+        // Store in localStorage
+        if (data.id) {
+          localStorage.setItem(`analysis-${data.id}`, JSON.stringify(data))
+          console.log('Stored fast analysis in localStorage:', `analysis-${data.id}`)
+        }
+        
+        // Increment usage count
+        await fetch('/api/increment-usage', { method: 'POST' })
+        
+        // Navigate to results
+        toast.success('Analysis complete!')
+        setTimeout(() => {
+          router.push(`/analysis/${data.id}`)
+        }, 500)
+        
+        setLoading(false)
+        return
+      }
+      
+      // If fast endpoint fails, try the async endpoint
+      console.log('Fast endpoint failed, trying async endpoint...')
+      
       const asyncResponse = await fetch('/api/analysis-async', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
