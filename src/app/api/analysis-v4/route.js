@@ -428,7 +428,7 @@ export async function POST(request) {
     // Add timeout tracking
     const analysisStartTime = Date.now()
     
-    // Step 1: Conduct deep research on both companies
+    // Step 1: Conduct deep research on both companies (with strict timeout)
     console.log('🔬 Phase 1: Researching companies and gathering data...')
     const baseUrl = request?.headers?.get('host') || 'localhost:3000'
     const protocol = request?.headers?.get('x-forwarded-proto') || 'http'
@@ -437,15 +437,25 @@ export async function POST(request) {
     let researchBasedAnalysis = null
     let competitiveImpact = null
     
-    try {
-      const researchUrl = `${protocol}://${baseUrl}/api/research-companies`
-      console.log(`📡 Calling research API: ${researchUrl}`)
-      
-      const researchResponse = await fetch(researchUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ seller, target })
-      })
+    // Only attempt research if we have enough time
+    const timeForResearch = 10000 - (Date.now() - analysisStartTime)
+    
+    if (timeForResearch > 6500) {  // Only try if we have >6.5 seconds
+      try {
+        const researchUrl = `${protocol}://${baseUrl}/api/research-companies`
+        console.log(`📡 Calling research API: ${researchUrl}`)
+        
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 5000)
+        
+        const researchResponse = await fetch(researchUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ seller, target }),
+          signal: controller.signal
+        })
+        
+        clearTimeout(timeout)
       
       console.log(`Research API response status: ${researchResponse.status}`)
       
@@ -488,8 +498,11 @@ export async function POST(request) {
         console.log(`📊 Final score: ${researchBasedAnalysis.success_probability}%`)
         console.log(`🔗 Linked ${evidenceBasedAnalysis.scorecard.dimensions.reduce((sum, d) => sum + d.sources.length, 0)} exact sources`)
       }
-    } catch (error) {
-      console.error('Research phase error:', error)
+      } catch (error) {
+        console.error('Research phase error:', error)
+      }
+    } else {
+      console.log('⏰ Skipping research due to time constraints')
     }
     
     // Step 1: Gather company intelligence
@@ -504,9 +517,10 @@ export async function POST(request) {
     
     let analysis = null
     
-    // Skip AI analysis if we're running low on time (< 3 seconds left)
+    // Skip AI analysis if we're running low on time (< 2 seconds left)
     const timeElapsed = Date.now() - analysisStartTime
-    const skipAI = timeElapsed > 7000 // Skip if we've already used 7+ seconds
+    const skipAI = timeElapsed > 8000 // Skip if we've already used 8+ seconds
+    console.log(`⏱️ Time elapsed: ${timeElapsed}ms, Skip AI: ${skipAI}`)
     
     // Step 3: Try AI analysis with ultra-strict prompting
     if (anthropic && !skipAI) {
