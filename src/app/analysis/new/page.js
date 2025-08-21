@@ -60,8 +60,66 @@ export default function NewAnalysis() {
     setAnalysisProgress(0)
     setAnalysisStage('Initializing analysis...')
     
+    // Simulate progress while the async endpoint works
+    const progressStages = [
+      { progress: 10, stage: 'Searching financial databases...' },
+      { progress: 25, stage: 'Fetching market data...' },
+      { progress: 40, stage: 'Analyzing recent news...' },
+      { progress: 55, stage: 'Evaluating compatibility...' },
+      { progress: 70, stage: 'Calculating success probability...' },
+      { progress: 85, stage: 'Generating comprehensive report...' },
+      { progress: 95, stage: 'Adding verified source links...' }
+    ]
+    
+    let currentStage = 0
+    const progressInterval = setInterval(() => {
+      if (currentStage < progressStages.length) {
+        setAnalysisProgress(progressStages[currentStage].progress)
+        setAnalysisStage(progressStages[currentStage].stage)
+        currentStage++
+      }
+    }, 2500) // Update every 2.5 seconds
+    
     try {
-      // Step 1: Start the analysis job
+      // Try the new async endpoint that handles everything in one call
+      const asyncResponse = await fetch('/api/analysis-async', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      })
+      
+      if (asyncResponse.ok) {
+        const data = await asyncResponse.json()
+        
+        // Clear progress interval
+        clearInterval(progressInterval)
+        
+        // Analysis completed successfully
+        setAnalysisProgress(100)
+        setAnalysisStage('Analysis complete!')
+        
+        // Store in localStorage
+        if (data.id) {
+          localStorage.setItem(`analysis-${data.id}`, JSON.stringify(data))
+          console.log('Stored analysis in localStorage:', `analysis-${data.id}`)
+        }
+        
+        // Increment usage count
+        await fetch('/api/increment-usage', { method: 'POST' })
+        
+        // Navigate to results
+        toast.success('Analysis complete!')
+        setTimeout(() => {
+          router.push(`/analysis/${data.id}`)
+        }, 500)
+        
+        setLoading(false)
+        return
+      }
+      
+      // If async endpoint fails, fall back to the job-based system
+      console.log('Async endpoint failed, trying job-based system...')
+      
       const startResponse = await fetch('/api/analysis-start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -69,7 +127,35 @@ export default function NewAnalysis() {
       })
       
       if (!startResponse.ok) {
-        throw new Error('Failed to start analysis')
+        // Final fallback to direct v4 API
+        console.log('Job system failed, trying direct API...')
+        const directResponse = await fetch('/api/analysis-v4', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        })
+        
+        if (!directResponse.ok) {
+          throw new Error('All analysis methods failed')
+        }
+        
+        const data = await directResponse.json()
+        setAnalysisProgress(100)
+        setAnalysisStage('Analysis complete!')
+        
+        if (data.id) {
+          localStorage.setItem(`analysis-${data.id}`, JSON.stringify(data))
+        }
+        
+        await fetch('/api/increment-usage', { method: 'POST' })
+        toast.success('Analysis complete!')
+        
+        setTimeout(() => {
+          router.push(`/analysis/${data.id}`)
+        }, 500)
+        
+        setLoading(false)
+        return
       }
       
       const { jobId } = await startResponse.json()
@@ -181,6 +267,7 @@ export default function NewAnalysis() {
       }, 2000) // Poll every 2 seconds
       
     } catch (error) {
+      clearInterval(progressInterval)
       console.error('Analysis error:', error)
       toast.error(error.message || 'Failed to run analysis. Please try again.')
       setLoading(false)
