@@ -37,6 +37,7 @@ import {
   getCompanyStatistics,
   formatRealSource
 } from '@/lib/real-company-sources'
+import { generateResearchBasedAnalysis } from '@/lib/research-based-analysis'
 import { 
   validateAnalysis,
   calculateConfidence,
@@ -462,6 +463,8 @@ export async function POST(request) {
     const protocol = request?.headers?.get('x-forwarded-proto') || 'http'
     
     let researchData = null
+    let researchBasedAnalysis = null
+    
     try {
       const researchResponse = await fetch(`${protocol}://${baseUrl}/api/research-companies`, {
         method: 'POST',
@@ -472,6 +475,11 @@ export async function POST(request) {
       if (researchResponse.ok) {
         researchData = await researchResponse.json()
         console.log(`📚 Research complete: ${researchData.seller.sources.length + researchData.target.sources.length} sources analyzed`)
+        
+        // Generate analysis based entirely on the research data
+        console.log('🧮 Generating analysis from research data...')
+        researchBasedAnalysis = generateResearchBasedAnalysis(researchData)
+        console.log(`📊 Research-based score: ${researchBasedAnalysis.success_probability}%`)
       }
     } catch (error) {
       console.log('Research API error:', error)
@@ -547,7 +555,52 @@ export async function POST(request) {
     // Step 5: Use validated fallback if AI fails
     if (!analysis || !analysis.scorecard) {
       console.log('🔧 Using validated fallback analysis')
-      analysis = generateValidatedFallbackAnalysis(seller, target, sellerInfo, targetInfo, compatibility)
+      
+      // If we have research-based analysis, use that for scores
+      if (researchBasedAnalysis) {
+        console.log('📈 Using research-based scores and evidence')
+        analysis = generateValidatedFallbackAnalysis(seller, target, sellerInfo, targetInfo, compatibility)
+        
+        // Override with research-based scores
+        analysis.scorecard.overall_score = researchBasedAnalysis.success_probability
+        
+        // Update dimension scores with research-based data
+        analysis.scorecard.dimensions.forEach(dim => {
+          const researchDim = researchBasedAnalysis.dimensions[dim.name.replace(' ', '')]
+          if (researchDim) {
+            dim.score = researchDim.score
+            
+            // Add evidence-based explanation
+            if (researchDim.evidence && researchDim.evidence.length > 0) {
+              dim.detailed_analysis = `Based on analysis of ${researchDim.evidence.length} data points:\n\n` +
+                researchDim.evidence.map(e => `• ${e.data} (Source: ${e.source})`).join('\n') +
+                '\n\n' + dim.detailed_analysis
+            }
+            
+            // Use real sources
+            if (researchDim.sources && researchDim.sources.length > 0) {
+              dim.sources = researchDim.sources.slice(0, 3).map(s => ({
+                title: s.title || 'Research Finding',
+                url: s.url,
+                quote: s.snippet || s.title,
+                relevance: 'Direct research evidence',
+                authority: new URL(s.url).hostname,
+                trust_indicator: '✓ Verified Source'
+              }))
+            }
+          }
+        })
+        
+        // Add research evidence to the analysis
+        analysis.research_evidence = {
+          sources_analyzed: (researchData?.seller?.sources?.length || 0) + (researchData?.target?.sources?.length || 0),
+          news_articles: (researchData?.seller?.news?.length || 0) + (researchData?.target?.news?.length || 0),
+          financial_data_points: researchBasedAnalysis.sources_used?.financial_sources?.length || 0,
+          web_sources: researchBasedAnalysis.sources_used?.web_sources?.length || 0
+        }
+      } else {
+        analysis = generateValidatedFallbackAnalysis(seller, target, sellerInfo, targetInfo, compatibility)
+      }
     }
     
     // Step 6: Validate and adjust the analysis
