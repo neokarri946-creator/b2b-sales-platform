@@ -3,7 +3,8 @@ import {
   getCompanyFinancials, 
   getCompanyNews, 
   getDetailedFinancials,
-  getTickerSymbol as getSymbol 
+  getTickerSymbol as getSymbol,
+  searchCompanyInfo 
 } from '@/lib/external-apis'
 
 // Research companies by actually fetching data from multiple sources
@@ -22,6 +23,13 @@ export async function POST(request) {
     
     // Start timing the research
     const startTime = Date.now()
+    
+    // Use Google Search to find relevant company information
+    console.log('🔍 Searching for company information...')
+    const [sellerSearchResults, targetSearchResults] = await Promise.all([
+      searchCompanyInfo(seller, 'general'),
+      searchCompanyInfo(target, 'general')
+    ])
     
     // Initialize research results
     const research = {
@@ -295,11 +303,35 @@ export async function POST(request) {
       compliance_requirements: ['SOC 2', 'GDPR', 'CCPA']
     }
     
+    // Add Google Search results to sources
+    if (sellerSearchResults && sellerSearchResults.length > 0) {
+      sellerSearchResults.forEach(result => {
+        research.seller.sources.push({
+          url: result.url,
+          type: 'web_search',
+          title: result.title,
+          snippet: result.snippet
+        })
+      })
+    }
+    
+    if (targetSearchResults && targetSearchResults.length > 0) {
+      targetSearchResults.forEach(result => {
+        research.target.sources.push({
+          url: result.url,
+          type: 'web_search',
+          title: result.title,
+          snippet: result.snippet
+        })
+      })
+    }
+    
     // Calculate total research time
     research.research_duration = Date.now() - startTime
     
     console.log(`✅ Research completed in ${research.research_duration}ms`)
     console.log(`📚 Collected ${research.seller.sources.length + research.target.sources.length} sources`)
+    console.log(`🔍 Google Search found ${sellerSearchResults.length + targetSearchResults.length} results`)
     
     return NextResponse.json(research)
     
