@@ -60,274 +60,240 @@ export default function NewAnalysis() {
     setAnalysisProgress(0)
     setAnalysisStage('Initializing analysis...')
     
-    // Simulate realistic research progress (slower, more realistic)
-    const progressStages = [
-      { progress: 5, stage: 'Initializing research framework...' },
-      { progress: 10, stage: 'Searching financial databases...' },
-      { progress: 18, stage: 'Fetching market data from Yahoo Finance...' },
-      { progress: 25, stage: 'Analyzing Bloomberg reports...' },
-      { progress: 32, stage: 'Researching recent news from Reuters...' },
-      { progress: 40, stage: 'Gathering competitive intelligence...' },
-      { progress: 48, stage: 'Evaluating technology compatibility...' },
-      { progress: 55, stage: 'Analyzing Gartner research...' },
-      { progress: 62, stage: 'Processing financial statements...' },
-      { progress: 70, stage: 'Calculating success probability...' },
-      { progress: 78, stage: 'Verifying data accuracy...' },
-      { progress: 85, stage: 'Compiling statistics and insights...' },
-      { progress: 92, stage: 'Generating comprehensive report...' },
-      { progress: 98, stage: 'Adding verified source links...' }
-    ]
-
-    // Start progress simulation (slower for realism)
-    let currentStage = 0
-    const progressInterval = setInterval(() => {
-      if (currentStage < progressStages.length) {
-        setAnalysisProgress(progressStages[currentStage].progress)
-        setAnalysisStage(progressStages[currentStage].stage)
-        currentStage++
-      }
-    }, 2000) // Slower updates for more realistic research time
-    
     try {
-      const response = await fetch('/api/analysis-v4', {
+      // Step 1: Start the analysis job
+      const startResponse = await fetch('/api/analysis-start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       })
       
-      if (!response.ok) {
-        throw new Error('Analysis failed')
+      if (!startResponse.ok) {
+        throw new Error('Failed to start analysis')
       }
       
-      const data = await response.json()
+      const { jobId } = await startResponse.json()
+      console.log('Analysis started with job ID:', jobId)
       
-      // Complete progress
-      clearInterval(progressInterval)
-      setAnalysisProgress(100)
-      setAnalysisStage('Analysis complete!')
+      // Step 2: Poll for results
+      let attempts = 0
+      const maxAttempts = 60 // Poll for up to 2 minutes
+      let analysisComplete = false
+      let analysisData = null
       
-      // Store in localStorage for client-side access
-      if (data.id) {
-        localStorage.setItem(`analysis-${data.id}`, JSON.stringify(data))
-        console.log('Stored analysis in localStorage:', `analysis-${data.id}`)
-      }
+      const pollInterval = setInterval(async () => {
+        attempts++
+        
+        try {
+          const statusResponse = await fetch(`/api/analysis-status?jobId=${jobId}`)
+          
+          if (!statusResponse.ok) {
+            console.error('Status check failed')
+            if (attempts >= maxAttempts) {
+              clearInterval(pollInterval)
+              throw new Error('Analysis timeout')
+            }
+            return
+          }
+          
+          const status = await statusResponse.json()
+          
+          // Update progress based on actual status
+          if (status.progress) {
+            setAnalysisProgress(status.progress)
+          }
+          
+          if (status.currentStep) {
+            setAnalysisStage(status.currentStep)
+          }
+          
+          // Check if complete
+          if (status.status === 'completed' && status.analysis) {
+            analysisComplete = true
+            analysisData = status.analysis
+            clearInterval(pollInterval)
+            
+            // Process the completed analysis
+            setAnalysisProgress(100)
+            setAnalysisStage('Analysis complete!')
+            
+            // Store in localStorage for client-side access
+            if (analysisData.id) {
+              localStorage.setItem(`analysis-${analysisData.id}`, JSON.stringify(analysisData))
+              console.log('Stored analysis in localStorage:', `analysis-${analysisData.id}`)
+            }
+            
+            // Increment usage count
+            await fetch('/api/increment-usage', { method: 'POST' })
+            
+            // Navigate to results
+            toast.success('Analysis complete!')
+            setTimeout(() => {
+              router.push(`/analysis/${analysisData.id || jobId}`)
+            }, 500)
+            
+            setLoading(false)
+          } else if (status.status === 'failed') {
+            clearInterval(pollInterval)
+            throw new Error(status.error || 'Analysis failed')
+          } else if (attempts >= maxAttempts) {
+            clearInterval(pollInterval)
+            
+            // Final fallback: Try direct v4 API
+            console.log('Timeout reached, trying direct API...')
+            const response = await fetch('/api/analysis-v4', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(formData)
+            })
+            
+            if (!response.ok) {
+              throw new Error('Analysis failed after timeout')
+            }
+            
+            const data = await response.json()
+            setAnalysisProgress(100)
+            setAnalysisStage('Analysis complete!')
+            
+            if (data.id) {
+              localStorage.setItem(`analysis-${data.id}`, JSON.stringify(data))
+            }
+            
+            await fetch('/api/increment-usage', { method: 'POST' })
+            toast.success('Analysis complete!')
+            
+            setTimeout(() => {
+              router.push(`/analysis/${data.id}`)
+            }, 500)
+            
+            setLoading(false)
+          }
+        } catch (error) {
+          console.error('Polling error:', error)
+          if (attempts >= maxAttempts) {
+            clearInterval(pollInterval)
+            toast.error(error.message || 'Analysis failed. Please try again.')
+            setLoading(false)
+            setAnalysisProgress(0)
+            setAnalysisStage('')
+          }
+        }
+      }, 2000) // Poll every 2 seconds
       
-      // Increment usage count
-      try {
-        await fetch('/api/increment-usage', {
-          method: 'POST'
-        })
-      } catch (error) {
-        console.log('Usage increment failed:', error)
-      }
-      
-      toast.success('Analysis complete!')
-      
-      // Small delay to show completion
-      setTimeout(() => {
-        router.push(`/analysis/${data.id}`)
-      }, 500)
     } catch (error) {
-      clearInterval(progressInterval)
+      console.error('Analysis error:', error)
+      toast.error(error.message || 'Failed to run analysis. Please try again.')
+      setLoading(false)
       setAnalysisProgress(0)
       setAnalysisStage('')
-      toast.error('Something went wrong. Please try again.')
-      console.error(error)
-    } finally {
-      setTimeout(() => {
-        setLoading(false)
-        setAnalysisProgress(0)
-        setAnalysisStage('')
-      }, 500)
     }
   }
 
-  if (checkingUsage) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    )
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       <Toaster position="top-center" />
       
-      {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-gray-900">
+      <div className="container mx-auto px-4 py-12">
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
               New Analysis
             </h1>
-            <button
-              onClick={() => router.push('/')}
-              className="text-gray-900 hover:text-gray-900"
-            >
-              ← Back to Home
-            </button>
+            <p className="text-gray-600 dark:text-gray-400">
+              Enter two companies to analyze their B2B partnership potential
+            </p>
           </div>
-        </div>
-      </div>
 
-      {/* Form */}
-      <div className="max-w-3xl mx-auto px-4 py-12">
-        {/* Usage Info */}
-        {usageData && (
-          <div className={`mb-6 p-4 rounded-lg ${
-            usageData.canAnalyze ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
-          }`}>
-            <div className="flex justify-between items-center">
-              <div>
-                <p className={`font-semibold ${usageData.canAnalyze ? 'text-green-800' : 'text-red-800'}`}>
-                  {usageData.canAnalyze 
-                    ? `${usageData.remaining} analysis${usageData.remaining !== 1 ? 'es' : ''} remaining this month`
-                    : 'Monthly analysis limit reached'
-                  }
-                </p>
-                <p className={`text-sm mt-1 ${usageData.canAnalyze ? 'text-green-600' : 'text-red-600'}`}>
-                  {usageData.subscription === 'free' 
-                    ? 'Free plan: 1 analysis per month'
-                    : usageData.subscription === 'starter'
-                    ? 'Starter plan: 50 analyses per month'
-                    : 'Growth plan: Unlimited analyses'
-                  }
-                </p>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+            {checkingUsage ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="mt-4 text-gray-600 dark:text-gray-400">Checking usage limits...</p>
               </div>
-              {!usageData.canAnalyze && (
-                <button
-                  onClick={() => router.push('/pricing')}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700"
-                >
-                  Upgrade Plan
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        <div className="bg-white rounded-lg shadow p-8">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-            Analyze a B2B Sales Opportunity
-          </h2>
-          
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <CompanyAutocomplete
-                value={formData.seller}
-                onChange={(value) => setFormData({...formData, seller: value})}
-                placeholder="Start typing to search..."
-                label="Your Company (Seller)"
-                required={true}
-              />
-              <p className="text-xs text-gray-900 mt-1">
-                The company offering products/services
-              </p>
-            </div>
-            
-            <div>
-              <CompanyAutocomplete
-                value={formData.target}
-                onChange={(value) => setFormData({...formData, target: value})}
-                placeholder="Start typing to search..."
-                label="Target Company (Buyer)"
-                required={true}
-              />
-              <p className="text-xs text-gray-900 mt-1">
-                The company you want to sell to
-              </p>
-            </div>
-            
-            {/* What You Get */}
-            <div className="bg-blue-50 rounded-lg p-6">
-              <h3 className="font-semibold text-blue-900 mb-3">
-                Your Analysis Will Include:
-              </h3>
-              <ul className="space-y-2 text-sm text-blue-700">
-                <li>✓ Success probability score (0-100%)</li>
-                <li>✓ Industry and company fit analysis</li>
-                <li>✓ Budget and timing assessment</li>
-                <li>✓ Key opportunities and challenges</li>
-                <li>✓ Recommended approach strategy</li>
-                <li>✓ Fresh market data and insights</li>
-              </ul>
-            </div>
-            
-            <button
-              type="submit"
-              disabled={loading || (usageData && !usageData.canAnalyze)}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Analyzing...' : 
-               (usageData && !usageData.canAnalyze) ? 'Limit Reached - Upgrade to Continue' :
-               'Run Analysis →'}
-            </button>
-          </form>
-
-          {/* Progress Bar */}
-          {loading && (
-            <div className="mt-6 bg-gray-50 rounded-lg p-6 border">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Analyzing Companies
-                </h3>
-                <span className="text-sm font-medium text-gray-600">
-                  {analysisProgress}%
-                </span>
-              </div>
-              
-              <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
-                <div 
-                  className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500 ease-out"
-                  style={{ width: `${analysisProgress}%` }}
-                />
-              </div>
-              
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
-                  <p className="text-sm text-gray-700 font-medium">
-                    {analysisProgress < 15 ? '🔍 Searching financial databases...' :
-                     analysisProgress < 30 ? '📊 Analyzing market data from Yahoo Finance...' :
-                     analysisProgress < 45 ? '📰 Researching recent news from Reuters & Bloomberg...' :
-                     analysisProgress < 60 ? '💻 Evaluating technology stack compatibility...' :
-                     analysisProgress < 75 ? '🎯 Analyzing competitive positioning from Gartner...' :
-                     analysisProgress < 85 ? '📈 Calculating success probability with real data...' :
-                     analysisProgress < 95 ? '✍️ Compiling comprehensive report with sources...' :
-                     '✅ Finalizing analysis with verified hyperlinks...'}
-                  </p>
-                </div>
-                
-                {analysisProgress > 20 && (
-                  <div className="pl-6 space-y-1">
-                    <p className="text-xs text-gray-500">
-                      • Found {Math.floor(analysisProgress / 8)} reliable sources...
+            ) : (
+              <>
+                {usageData && !usageData.canAnalyze && (
+                  <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                    <p className="text-yellow-800 dark:text-yellow-200">
+                      You've reached your monthly analysis limit. Please upgrade your plan to continue.
                     </p>
-                    {analysisProgress > 40 && (
-                      <p className="text-xs text-gray-500">
-                        • Extracted {Math.floor(analysisProgress / 5)} key statistics...
-                      </p>
-                    )}
-                    {analysisProgress > 60 && (
-                      <p className="text-xs text-gray-500">
-                        • Verified {Math.floor(analysisProgress / 10)} data points...
-                      </p>
-                    )}
                   </div>
                 )}
-              </div>
-              
-              <div className="mt-4 pt-3 border-t border-gray-200">
-                <p className="text-xs text-gray-400 italic">
-                  ⏱️ Deep research typically takes 20-30 seconds for maximum accuracy
-                </p>
-                <p className="text-xs text-gray-400 italic mt-1">
-                  📚 Analyzing real data from: Yahoo Finance • Bloomberg • Reuters • MarketWatch • Gartner
-                </p>
-              </div>
-            </div>
-          )}
+
+                {usageData && usageData.canAnalyze && usageData.remaining <= 2 && (
+                  <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <p className="text-blue-800 dark:text-blue-200">
+                      You have {usageData.remaining} {usageData.remaining === 1 ? 'analysis' : 'analyses'} remaining this month.
+                    </p>
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Seller Company
+                    </label>
+                    <CompanyAutocomplete
+                      value={formData.seller}
+                      onChange={(value) => setFormData({ ...formData, seller: value })}
+                      placeholder="e.g., Salesforce, Microsoft, Oracle"
+                      disabled={loading}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Target Company
+                    </label>
+                    <CompanyAutocomplete
+                      value={formData.target}
+                      onChange={(value) => setFormData({ ...formData, target: value })}
+                      placeholder="e.g., Apple, Amazon, Nike"
+                      disabled={loading}
+                    />
+                  </div>
+
+                  {loading && (
+                    <div className="mt-6">
+                      <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+                        <span>{analysisStage}</span>
+                        <span>{analysisProgress}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                        <div 
+                          className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-500 ease-out"
+                          style={{ width: `${analysisProgress}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={loading || !formData.seller || !formData.target || (usageData && !usageData.canAnalyze)}
+                    className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02]"
+                  >
+                    {loading ? (
+                      <span className="flex items-center justify-center">
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Analyzing...
+                      </span>
+                    ) : (
+                      'Run Analysis'
+                    )}
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+
+          <div className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
+            <p>Analysis uses real-time data from multiple sources</p>
+            <p className="mt-1">Results include market research, financial data, and competitive intelligence</p>
+          </div>
         </div>
       </div>
     </div>
