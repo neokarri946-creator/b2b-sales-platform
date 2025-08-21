@@ -435,11 +435,16 @@ export async function POST(request) {
     let competitiveImpact = null
     
     try {
-      const researchResponse = await fetch(`${protocol}://${baseUrl}/api/research-companies`, {
+      const researchUrl = `${protocol}://${baseUrl}/api/research-companies`
+      console.log(`📡 Calling research API: ${researchUrl}`)
+      
+      const researchResponse = await fetch(researchUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ seller, target })
       })
+      
+      console.log(`Research API response status: ${researchResponse.status}`)
       
       if (researchResponse.ok) {
         researchData = await researchResponse.json()
@@ -479,9 +484,13 @@ export async function POST(request) {
         
         console.log(`📊 Final score: ${researchBasedAnalysis.success_probability}%`)
         console.log(`🔗 Linked ${evidenceBasedAnalysis.scorecard.dimensions.reduce((sum, d) => sum + d.sources.length, 0)} exact sources`)
+      } else {
+        const errorText = await researchResponse.text()
+        console.error(`Research API failed with status ${researchResponse.status}: ${errorText}`)
       }
     } catch (error) {
-      console.log('Research API error:', error)
+      console.error('Research API error:', error)
+      console.error('Research API error details:', error.message)
     }
     
     // Step 1: Gather company intelligence
@@ -701,8 +710,43 @@ export async function POST(request) {
     
   } catch (error) {
     console.error('Analysis error:', error)
+    console.error('Error details:', error.message)
+    console.error('Stack trace:', error.stack)
+    
+    // Log specific error context
+    const errorContext = {
+      seller,
+      target,
+      hasUser: !!userId,
+      hasAnthropic: !!anthropic,
+      hasOpenAI: !!openai,
+      hasSupabase: !!supabase,
+      apiKeys: {
+        alphaVantage: !!process.env.ALPHA_VANTAGE_API_KEY,
+        newsAPI: !!process.env.NEWS_API_KEY,
+        fmp: !!process.env.FMP_API_KEY,
+        googleSearch: !!process.env.GOOGLE_SEARCH_API_KEY,
+        googleEngine: !!process.env.GOOGLE_SEARCH_ENGINE_ID,
+        anthropic: !!process.env.ANTHROPIC_API_KEY,
+        openai: !!process.env.OPENAI_API_KEY
+      },
+      errorType: error.name,
+      errorMessage: error.message
+    }
+    
+    console.error('Error context:', JSON.stringify(errorContext, null, 2))
+    
+    // Return more detailed error information
     return NextResponse.json(
-      { error: 'Failed to generate analysis' },
+      { 
+        error: 'Failed to generate analysis',
+        message: error.message || 'Unknown error occurred',
+        details: {
+          type: error.name || 'Error',
+          phase: 'analysis_generation',
+          context: errorContext
+        }
+      },
       { status: 500 }
     )
   }
