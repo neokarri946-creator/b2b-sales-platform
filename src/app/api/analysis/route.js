@@ -585,9 +585,7 @@ export async function POST(request) {
     body: await request.text()
   })
   return v4Response
-  
-  /* DISABLED OLD CODE WITH FAKE URLS
-  try {
+}
     // Get current user
     const user = await currentUser()
     const userId = user?.id

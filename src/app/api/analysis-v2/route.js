@@ -498,8 +498,7 @@ export async function POST(request) {
     headers: request.headers,
     body: await request.text()
   })
-  /* DISABLED - Contains hardcoded fake URLs
-  try {
+}
     const user = await currentUser()
     const userId = user?.id
     
