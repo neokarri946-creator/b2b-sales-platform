@@ -488,6 +488,8 @@ export async function POST(request) {
         console.log(`📊 Final score: ${researchBasedAnalysis.success_probability}%`)
         console.log(`🔗 Linked ${evidenceBasedAnalysis.scorecard.dimensions.reduce((sum, d) => sum + d.sources.length, 0)} exact sources`)
       }
+    } catch (error) {
+      console.error('Research phase error:', error)
     }
     
     // Step 1: Gather company intelligence
