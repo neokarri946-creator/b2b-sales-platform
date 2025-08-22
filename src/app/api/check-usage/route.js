@@ -115,7 +115,8 @@ export async function GET() {
     const limits = {
       free: 1,
       starter: 50,
-      growth: 999999 // Unlimited
+      growth: 150,  // Changed from unlimited to 150
+      enterprise: 999999 // True unlimited for enterprise
     }
 
     const limit = limits[activeSubscription] || 1

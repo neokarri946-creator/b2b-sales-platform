@@ -84,21 +84,68 @@ function PricingContent() {
       price: '$197',
       period: '/month',
       features: [
-        'Unlimited analyses',
-        'Custom AI models',
+        '150 analyses per month',  // Reduced from unlimited
+        'Advanced AI insights',
         'API access',
-        'Team collaboration',
+        'Team collaboration (5 users)',
         'Priority support',
-        'Custom integrations'
+        'CRM integrations'
       ],
       cta: 'Get Started',
       priceId: 'price_1Ry9X98DXZKwTJPNxra81ItP' // Real Stripe price ID
+    },
+    {
+      name: 'Enterprise',
+      price: 'Custom',
+      period: 'profit share',
+      features: [
+        'Unlimited analyses',
+        'Dedicated AI models',
+        'White-label option',
+        'Unlimited team members',
+        'Dedicated account manager',
+        '24/7 phone support',
+        'Custom integrations',
+        'Success-based pricing (% of closed deals)'
+      ],
+      cta: 'Contact Sales',
+      priceId: null,
+      enterprise: true,
+      contactEmail: 'enterprise@b2bsalesplatform.com' // Change this to your email
     }
   ]
 
-  const handleSubscribe = async (priceId, planName) => {
+  const handleSubscribe = async (priceId, plan) => {
     if (!user) {
       router.push('/sign-up')
+      return
+    }
+
+    // Handle Enterprise plan - open email client
+    if (plan.enterprise) {
+      const subject = encodeURIComponent('Enterprise Plan Inquiry - B2B Sales Platform')
+      const body = encodeURIComponent(`Hi,
+
+I'm interested in the Enterprise plan with profit-sharing pricing for my company.
+
+Company Name: [Your Company]
+Your Name: ${user.firstName || ''} ${user.lastName || ''}
+Email: ${user.emailAddresses?.[0]?.emailAddress || ''}
+Current Monthly Deal Volume: [Estimated number of deals]
+Average Deal Size: [Typical deal value]
+
+I'd like to learn more about:
+- The profit-sharing model and percentage
+- Implementation timeline
+- Dedicated support options
+- Custom AI model training
+
+Please schedule a call at your earliest convenience.
+
+Best regards,
+${user.firstName || 'User'}`)
+      
+      window.location.href = `mailto:${plan.contactEmail}?subject=${subject}&body=${body}`
       return
     }
 
@@ -199,17 +246,23 @@ function PricingContent() {
 
       {/* Pricing Cards */}
       <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {plans.map((plan) => (
             <div
               key={plan.name}
               className={`bg-white rounded-lg shadow-lg overflow-hidden ${
-                plan.popular ? 'ring-2 ring-blue-500' : ''
+                plan.popular ? 'ring-2 ring-blue-500' : 
+                plan.enterprise ? 'ring-2 ring-purple-500 transform scale-105' : ''
               }`}
             >
               {plan.popular && (
                 <div className="bg-blue-500 text-white text-center py-2 text-sm font-semibold">
                   MOST POPULAR
+                </div>
+              )}
+              {plan.enterprise && (
+                <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white text-center py-2 text-sm font-semibold">
+                  PERFORMANCE-BASED PRICING
                 </div>
               )}
               
@@ -250,11 +303,13 @@ function PricingContent() {
                   </div>
                 ) : (
                   <button
-                    onClick={() => plan.name === 'Free' && !user ? router.push('/sign-up') : handleSubscribe(plan.priceId, plan.name)}
+                    onClick={() => plan.name === 'Free' && !user ? router.push('/sign-up') : handleSubscribe(plan.priceId, plan)}
                     disabled={loading === plan.priceId || loading === 'cancel' || (!user && plan.name !== 'Free')}
                     className={`w-full py-3 rounded-lg font-semibold ${
                       plan.popular
                         ? 'bg-blue-600 text-white hover:bg-blue-700'
+                        : plan.enterprise
+                        ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800'
                         : plan.name === 'Free' && !user
                         ? 'bg-blue-600 text-white hover:bg-blue-700'
                         : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
@@ -302,6 +357,13 @@ function PricingContent() {
               <h3 className="font-semibold text-gray-900 mb-2">What payment methods do you accept?</h3>
               <p className="text-gray-900">
                 We accept all major credit cards through Stripe.
+              </p>
+            </div>
+            
+            <div className="bg-white rounded-lg p-6">
+              <h3 className="font-semibold text-gray-900 mb-2">How does the Enterprise profit-sharing model work?</h3>
+              <p className="text-gray-900">
+                Instead of a fixed monthly fee, Enterprise customers pay a percentage of successful deals closed using our platform. This aligns our incentives with your success - we only succeed when you do. Contact our sales team to discuss custom terms based on your deal volume.
               </p>
             </div>
           </div>
