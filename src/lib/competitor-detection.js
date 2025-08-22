@@ -132,10 +132,10 @@ export function areCompetitors(company1, company2) {
 }
 
 // Analyze competition from news and search results - DEEP ANALYSIS
-export function analyzeCompetitionFromResearch(researchData) {
+export function analyzeCompetitionFromResearch(researchData, sellerName = null, targetName = null) {
   const competitionSignals = []
-  const seller = researchData.seller.company
-  const target = researchData.target.company
+  const seller = sellerName || researchData.seller?.company || ''
+  const target = targetName || researchData.target?.company || ''
   
   // Enhanced competition keywords to detect ANY level of competition
   const competitionKeywords = [
@@ -337,7 +337,7 @@ export function calculateCompetitiveImpact(seller, target, researchData) {
   const competitorCheck = areCompetitors(seller, target)
   
   // Analyze research for competition signals - DEEP ANALYSIS
-  const competitionSignals = analyzeCompetitionFromResearch(researchData)
+  const competitionSignals = analyzeCompetitionFromResearch(researchData, seller, target)
   
   // Detect product/service overlap from descriptions
   const productOverlap = detectProductOverlap(researchData)
@@ -482,6 +482,11 @@ function detectProductOverlap(researchData) {
     details: []
   }
   
+  // Ensure researchData has the expected structure
+  if (!researchData || !researchData.seller || !researchData.target) {
+    return overlap
+  }
+  
   // Get product descriptions from sources
   const sellerProducts = []
   const targetProducts = []
@@ -523,6 +528,11 @@ function detectCustomerOverlap(researchData) {
     severity: 0,
     reason: '',
     details: []
+  }
+  
+  // Ensure researchData has the expected structure
+  if (!researchData || !researchData.seller || !researchData.target) {
+    return overlap
   }
   
   // Check if they target the same customer segments
