@@ -58,16 +58,16 @@ export default function NewAnalysis() {
     }
 
     setLoading(true)
-    setAnalysisProgress(0)
+    setAnalysisProgress(5)  // Start at 5% immediately for instant feedback
     setAnalysisStage('Initializing analysis...')
     
     // Simulate progress while the async endpoint works
     const progressStages = [
-      { progress: 10, stage: 'Searching financial databases...' },
-      { progress: 25, stage: 'Fetching market data...' },
-      { progress: 40, stage: 'Analyzing recent news...' },
-      { progress: 55, stage: 'Evaluating compatibility...' },
-      { progress: 70, stage: 'Calculating success probability...' },
+      { progress: 15, stage: 'Searching financial databases...' },
+      { progress: 30, stage: 'Fetching market data...' },
+      { progress: 45, stage: 'Analyzing recent news...' },
+      { progress: 60, stage: 'Evaluating compatibility...' },
+      { progress: 75, stage: 'Calculating success probability...' },
       { progress: 85, stage: 'Generating comprehensive report...' },
       { progress: 95, stage: 'Adding verified source links...' }
     ]
@@ -79,7 +79,7 @@ export default function NewAnalysis() {
         setAnalysisStage(progressStages[currentStage].stage)
         currentStage++
       }
-    }, 2500) // Update every 2.5 seconds
+    }, 800) // Update every 800ms for smoother progress
     
     try {
       // First try the detailed endpoint for comprehensive results
