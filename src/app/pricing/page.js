@@ -97,7 +97,7 @@ function PricingContent() {
     {
       name: 'Enterprise',
       price: 'Custom',
-      period: 'profit share',
+      period: '',
       features: [
         'Unlimited analyses',
         'Dedicated AI models',
