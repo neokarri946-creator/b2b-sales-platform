@@ -220,14 +220,92 @@ export function classifyIndustry(companyName, description = '') {
     }
   }
   
-  // Default to unknown/neutral
+  // Industry-specific classifications for common companies
+  const companyLower = companyName.toLowerCase()
+  
+  // Oil & Gas vs Green Tech (opposites)
+  if (companyLower.includes('exxon') || companyLower.includes('chevron') || companyLower.includes('shell') || 
+      companyLower.includes('bp') || searchText.includes('oil') || searchText.includes('petroleum')) {
+    return {
+      category: 'oil_gas',
+      risk_level: 6,
+      risk_category: 'MEDIUM_RISK',
+      enterprise_compatible: true,
+      government_compatible: 'limited',
+      description: 'Oil and gas industry'
+    }
+  }
+  
+  if (companyLower.includes('tesla') || companyLower.includes('rivian') || searchText.includes('electric vehicle') ||
+      searchText.includes('solar') || searchText.includes('renewable')) {
+    return {
+      category: 'green_tech',
+      risk_level: 2,
+      risk_category: 'LOW_RISK',
+      enterprise_compatible: true,
+      government_compatible: true,
+      description: 'Green technology and clean energy'
+    }
+  }
+  
+  // Traditional Retail vs E-commerce
+  if (companyLower.includes('walmart') || companyLower.includes('target') || companyLower.includes('kroger') ||
+      companyLower.includes('costco') || companyLower.includes('home depot')) {
+    return {
+      category: 'traditional_retail',
+      risk_level: 3,
+      risk_category: 'LOW_RISK',
+      enterprise_compatible: true,
+      government_compatible: true,
+      description: 'Traditional retail and brick-and-mortar'
+    }
+  }
+  
+  if (companyLower.includes('amazon') || companyLower.includes('shopify') || companyLower.includes('etsy') ||
+      companyLower.includes('ebay') || searchText.includes('e-commerce')) {
+    return {
+      category: 'ecommerce',
+      risk_level: 2,
+      risk_category: 'LOW_RISK',
+      enterprise_compatible: true,
+      government_compatible: true,
+      description: 'E-commerce and online retail'
+    }
+  }
+  
+  // Fast Food vs Health Food
+  if (companyLower.includes('mcdonald') || companyLower.includes('burger king') || companyLower.includes('kfc') ||
+      companyLower.includes('taco bell') || searchText.includes('fast food')) {
+    return {
+      category: 'fast_food',
+      risk_level: 4,
+      risk_category: 'MEDIUM_RISK',
+      enterprise_compatible: true,
+      government_compatible: 'limited',
+      description: 'Fast food and quick service restaurants'
+    }
+  }
+  
+  if (companyLower.includes('whole foods') || companyLower.includes('sweetgreen') || searchText.includes('organic') ||
+      searchText.includes('health food') || searchText.includes('vegan')) {
+    return {
+      category: 'health_food',
+      risk_level: 2,
+      risk_category: 'LOW_RISK',
+      enterprise_compatible: true,
+      government_compatible: true,
+      description: 'Health food and organic products'
+    }
+  }
+  
+  // Default to unknown/neutral - be more conservative
   return {
     category: 'unknown',
-    risk_level: 3,
+    risk_level: 5, // Increased risk for unknown
     risk_category: 'UNKNOWN',
-    enterprise_compatible: 'unknown',
-    government_compatible: 'unknown',
-    description: 'Unclassified industry'
+    enterprise_compatible: 'limited',
+    government_compatible: 'limited',
+    description: 'Unclassified industry - requires review'
   }
 }
 
@@ -254,10 +332,42 @@ export function classifyBuyer(companyName, description = '') {
   }
 }
 
+// Define opposite/incompatible industry pairs
+const INCOMPATIBLE_PAIRS = [
+  ['oil_gas', 'green_tech'],
+  ['fast_food', 'health_food'],
+  ['tobacco', 'healthcare'],
+  ['gambling', 'education'],
+  ['adult_entertainment', 'education'],
+  ['weapons', 'education'],
+  ['traditional_retail', 'ecommerce'] // Competitive tension
+]
+
+function areIndustriesOpposite(industry1, industry2) {
+  return INCOMPATIBLE_PAIRS.some(pair => 
+    (pair.includes(industry1) && pair.includes(industry2))
+  )
+}
+
 // Calculate compatibility score
 export function calculateCompatibility(seller, target, sellerInfo = {}, targetInfo = {}) {
   const sellerClass = classifyIndustry(seller, sellerInfo.description)
   const buyerClass = classifyBuyer(target, targetInfo.description)
+  const targetClass = classifyIndustry(target, targetInfo.description) // Also classify target as industry
+  
+  // Check for opposite industries
+  if (areIndustriesOpposite(sellerClass.category, targetClass.category)) {
+    return {
+      score: 0.15, // 15% - very low compatibility
+      verdict: 'INCOMPATIBLE',
+      reason: `${seller} (${sellerClass.description}) and ${target} (${targetClass.description}) represent opposing industry philosophies and values, making partnership extremely challenging.`,
+      details: {
+        seller_industry: sellerClass.category,
+        target_industry: targetClass.category,
+        blocking_factors: ['Opposing industry values', 'Conflicting business models', 'Brand reputation risk']
+      }
+    }
+  }
   
   // Immediate disqualifiers
   if (sellerClass.risk_level >= 8 && buyerClass.conservatism_level >= 7) {
