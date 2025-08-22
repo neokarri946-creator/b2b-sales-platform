@@ -81,15 +81,15 @@ export default function NewAnalysis() {
     }, 2500) // Update every 2.5 seconds
     
     try {
-      // First try the fast endpoint for immediate results
-      const fastResponse = await fetch('/api/analysis-fast', {
+      // First try the detailed endpoint for comprehensive results
+      const detailedResponse = await fetch('/api/analysis-detailed', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...formData, includeResearch: true })
       })
       
-      if (fastResponse.ok) {
-        const data = await fastResponse.json()
+      if (detailedResponse.ok) {
+        const data = await detailedResponse.json()
         
         // Clear progress interval
         clearInterval(progressInterval)
