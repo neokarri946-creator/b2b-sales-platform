@@ -5,6 +5,7 @@ import { useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import toast, { Toaster } from 'react-hot-toast'
 import CompanyAutocomplete from '@/components/CompanyAutocomplete'
+import Navigation from '@/components/Navigation'
 
 export default function NewAnalysis() {
   const { user } = useUser()
@@ -315,47 +316,72 @@ export default function NewAnalysis() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <Toaster position="top-center" />
+      <Navigation />
       
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
               New Analysis
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-gray-600">
               Enter two companies to analyze their B2B partnership potential
             </p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+          <div className="bg-white rounded-2xl shadow-xl p-8">
             {checkingUsage ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-4 text-gray-600 dark:text-gray-400">Checking usage limits...</p>
+                <p className="mt-4 text-gray-600">Checking usage limits...</p>
               </div>
             ) : (
               <>
-                {usageData && !usageData.canAnalyze && (
-                  <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                    <p className="text-yellow-800 dark:text-yellow-200">
-                      You&apos;ve reached your monthly analysis limit. Please upgrade your plan to continue.
-                    </p>
+                {/* Usage Display - Always show when data is available */}
+                {usageData && (
+                  <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm font-medium text-gray-700">Your Plan: <span className="capitalize font-semibold">{usageData.subscription === 'unlimited_dev' ? 'Developer' : usageData.subscription || 'Free'}</span></p>
+                        <p className="text-lg font-bold text-blue-900 mt-1">
+                          {usageData.remaining === 999999 ? 'Unlimited' : usageData.remaining} {usageData.remaining === 1 ? 'analysis' : 'analyses'} remaining
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-600">Used this month</p>
+                        <p className="text-xl font-semibold text-gray-900">{usageData.used || 0}/{usageData.limit === 999999 ? '∞' : usageData.limit}</p>
+                      </div>
+                    </div>
+                    {usageData.remaining <= 2 && usageData.remaining !== 999999 && (
+                      <div className="mt-3 pt-3 border-t border-blue-200">
+                        <p className="text-sm text-blue-800">
+                          {usageData.remaining === 0 ? 'You\'ve reached your limit.' : `Only ${usageData.remaining} ${usageData.remaining === 1 ? 'analysis' : 'analyses'} left.`} 
+                          <a href="/pricing" className="font-medium underline ml-1">Upgrade for more</a>
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {usageData && usageData.canAnalyze && usageData.remaining <= 2 && (
-                  <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                    <p className="text-blue-800 dark:text-blue-200">
-                      You have {usageData.remaining} {usageData.remaining === 1 ? 'analysis' : 'analyses'} remaining this month.
+                {usageData && !usageData.canAnalyze && (
+                  <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-red-800 font-medium">
+                      ⚠️ Monthly limit reached
                     </p>
+                    <p className="text-sm text-red-700 mt-1">
+                      Upgrade your plan to continue analyzing companies.
+                    </p>
+                    <a href="/pricing" className="inline-block mt-3 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700">
+                      View Upgrade Options
+                    </a>
                   </div>
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Seller Company
                     </label>
                     <CompanyAutocomplete
@@ -367,7 +393,7 @@ export default function NewAnalysis() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Target Company
                     </label>
                     <CompanyAutocomplete
@@ -380,11 +406,11 @@ export default function NewAnalysis() {
 
                   {loading && (
                     <div className="mt-6">
-                      <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      <div className="flex justify-between text-sm text-gray-600 mb-2">
                         <span>{analysisStage}</span>
                         <span>{analysisProgress}%</span>
                       </div>
-                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                      <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
                         <div 
                           className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-500 ease-out"
                           style={{ width: `${analysisProgress}%` }}
@@ -415,7 +441,7 @@ export default function NewAnalysis() {
             )}
           </div>
 
-          <div className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
+          <div className="mt-8 text-center text-sm text-gray-600">
             <p>Analysis uses real-time data from multiple sources</p>
             <p className="mt-1">Results include market research, financial data, and competitive intelligence</p>
           </div>
