@@ -250,17 +250,6 @@ export default function AnalysisReport({ analysis }) {
                             </div>
                           </div>
                         )}
-                        
-                        {/* Bottom Collapse Button */}
-                        <div className="mt-4 flex justify-center">
-                          <button
-                            onClick={() => toggleDimension(dimension.name)}
-                            className="bg-gray-100 text-gray-700 hover:bg-gray-200 text-sm font-medium flex items-center px-3 py-1.5 rounded transition-colors"
-                          >
-                            <ChevronUpIcon className="h-4 w-4 mr-1" />
-                            Collapse Section
-                          </button>
-                        </div>
                       </div>
                     )}
                   </div>
