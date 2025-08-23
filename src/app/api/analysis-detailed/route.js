@@ -574,10 +574,20 @@ export async function POST(request) {
       
       if (competitiveImpact.scoreReduction > 0) {
         const originalScore = analysis.scorecard.overall_score
+        const adjustmentFactor = (100 - competitiveImpact.scoreReduction) / 100
+        
+        // Adjust overall score
         analysis.scorecard.overall_score = Math.max(
           5, // Minimum score
-          Math.round(originalScore * (100 - competitiveImpact.scoreReduction) / 100)
+          Math.round(originalScore * adjustmentFactor)
         )
+        
+        // Adjust dimension scores proportionally to maintain consistency
+        analysis.scorecard.dimensions = analysis.scorecard.dimensions.map(dim => ({
+          ...dim,
+          score: Math.max(0.5, parseFloat((dim.score * adjustmentFactor).toFixed(1)))
+        }))
+        
         console.log(`⚠️ Competition detected: Score adjusted from ${originalScore}% to ${analysis.scorecard.overall_score}%`)
       }
     }
