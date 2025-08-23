@@ -583,6 +583,7 @@ export async function POST(request) {
         )
         
         // Adjust dimension scores proportionally to maintain consistency
+        // The weighted average of dimension scores should equal overall_score/10
         analysis.scorecard.dimensions = analysis.scorecard.dimensions.map(dim => ({
           ...dim,
           score: Math.max(0.5, parseFloat((dim.score * adjustmentFactor).toFixed(1)))
